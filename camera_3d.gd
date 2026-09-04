@@ -10,6 +10,9 @@ func _ready():
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _input(event):
+	# Se esta câmera não for a atual, ignora os comandos
+	if not current: 
+		return
 	# Solta o mouse ao apertar ESC, e prende de novo se clicar com o botão esquerdo
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_ESCAPE:
@@ -27,6 +30,10 @@ func _input(event):
 		rotation.x = clamp(pitch, deg_to_rad(-90), deg_to_rad(90))
 
 func _process(delta):
+	# Se esta câmera não for a atual, ignora os comandos
+	if not current: 
+		return
+	
 	if Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED:
 		return
 

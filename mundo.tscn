@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cmth148s1ow3m"]
 
 [ext_resource type="Script" uid="uid://df5m0gxqfrccg" path="res://camera_3d.gd" id="1_6ba58"]
+[ext_resource type="Script" uid="uid://uilmumcxwbqo" path="res://mundo.gd" id="1_fw4w5"]
 [ext_resource type="Script" uid="uid://cbwekrgp30bng" path="res://grid_manager.gd" id="2_lgngo"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_lgngo"]
@@ -31,6 +32,7 @@ use_colors = true
 mesh = SubResource("BoxMesh_fwvjn")
 
 [node name="Mundo" type="Node3D" unique_id=237065845]
+script = ExtResource("1_fw4w5")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2098129811]
 environment = SubResource("Environment_otwa2")
@@ -52,3 +54,13 @@ script = ExtResource("2_lgngo")
 
 [node name="GridVisualizer" type="MultiMeshInstance3D" parent="GridManager" unique_id=905125094]
 multimesh = SubResource("MultiMesh_ncwlc")
+
+[node name="TopCamera" type="Camera3D" parent="." unique_id=412091087]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 25, 35, 24)
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=419264889]
+
+[node name="CameraLabel" type="Label" parent="HUD" unique_id=1630828182]
+offset_right = 40.0
+offset_bottom = 23.0
+text = "Camera: ..."
