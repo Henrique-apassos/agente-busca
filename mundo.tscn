@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://cmth148s1ow3m"]
+
+[ext_resource type="Script" uid="uid://df5m0gxqfrccg" path="res://camera_3d.gd" id="1_6ba58"]
+[ext_resource type="Script" uid="uid://cbwekrgp30bng" path="res://grid_manager.gd" id="2_lgngo"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_lgngo"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_fw4w5"]
+sky_material = SubResource("ProceduralSkyMaterial_lgngo")
+
+[sub_resource type="Environment" id="Environment_otwa2"]
+background_mode = 2
+sky = SubResource("Sky_fw4w5")
+glow_enabled = true
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ncwlc"]
+size = Vector2(50, 50)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lgngo"]
+vertex_color_use_as_albedo = true
+
+[sub_resource type="BoxMesh" id="BoxMesh_fwvjn"]
+material = SubResource("StandardMaterial3D_lgngo")
+size = Vector3(0.9, 0.1, 0.9)
+
+[sub_resource type="MultiMesh" id="MultiMesh_ncwlc"]
+transform_format = 1
+use_colors = true
+mesh = SubResource("BoxMesh_fwvjn")
+
+[node name="Mundo" type="Node3D" unique_id=237065845]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2098129811]
+environment = SubResource("Environment_otwa2")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=723225820]
+transform = Transform3D(-0.8660254, -0.4602525, 0.19536556, 0, 0.39073107, 0.92050487, -0.50000006, 0.7971806, -0.33838302, 0, 0, 0)
+shadow_enabled = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1492198447]
+visible = false
+mesh = SubResource("PlaneMesh_ncwlc")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1507014806]
+transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 10, 10)
+script = ExtResource("1_6ba58")
+
+[node name="GridManager" type="Node3D" parent="." unique_id=321322035]
+script = ExtResource("2_lgngo")
+
+[node name="GridVisualizer" type="MultiMeshInstance3D" parent="GridManager" unique_id=905125094]
+multimesh = SubResource("MultiMesh_ncwlc")
