@@ -91,3 +91,19 @@ func generate_grid():
 			var cell_transform = Transform3D().translated(cell_data.world_pos)
 			multi_mesh.set_instance_transform(index, cell_transform)
 			multi_mesh.set_instance_color(index, color)
+
+func get_random_valid_position(exclude_water: bool = true) -> Vector3:
+	var candidates = []
+	
+	for x in range(grid_width):
+		for z in range(grid_depth):
+			var cell = grid_logic[x][z]
+			if exclude_water and cell.terrain == "water":
+				continue
+			candidates.append(cell)
+	
+	if candidates.is_empty():
+		return Vector3.ZERO
+	
+	var chosen = candidates[randi() % candidates.size()]
+	return chosen.world_pos
