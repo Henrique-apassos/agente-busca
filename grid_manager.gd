@@ -129,3 +129,17 @@ func get_random_valid_cell(exclude_grid_pos: Vector2 = Vector2(-1, -1), allowed_
 		break
 	
 	return cell
+
+func get_grid_snapshot() -> Array:
+	var flat = []
+	for x in range(grid_width):
+		for z in range(grid_depth):
+			var cell = grid_logic[x][z]
+			flat.append({
+				"x": x,
+				"z": z,
+				"terrain": cell.terrain,
+				"weight": cell.weight,
+				"world_pos": cell.world_pos
+			})
+	return flat
