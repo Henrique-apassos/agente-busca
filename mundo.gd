@@ -5,18 +5,26 @@ extends Node3D
 @onready var camera_label = $HUD/CameraLabel
 @onready var grid_manager = $GridManager
 @onready var end_marker = $EndMarker
+@onready var agente = $Agente
 
 var using_free_camera: bool = true
+var end_marker_grid_pos: Vector2 = Vector2(-1, -1)
 
 func _ready():
 	free_camera.make_current()
 	update_hud()
 	place_end_marker()
+	place_agent()
 
 func place_end_marker():
-	var spawn_pos = grid_manager.get_random_valid_position()
-	# Pequeno offset em Y pra ela não ficar cravada no terreno
-	end_marker.global_position = spawn_pos + Vector3(0, 0.4, 0)
+	var goal_cell = grid_manager.get_random_valid_cell()
+	end_marker.global_position = goal_cell.world_pos + Vector3(0, 0.4, 0)
+	end_marker_grid_pos = goal_cell.grid_pos
+
+func place_agent():
+	# Só nasce em terreno seco: grama ou lama (nunca água, nem obstáculo)
+	var agent_cell = grid_manager.get_random_valid_cell(end_marker_grid_pos, ["grass", "mud"])
+	agente.global_position = agent_cell.world_pos + Vector3(0, 0.4, 0)
 
 func _input(event):
 	if event is InputEventKey and event.pressed and not event.echo:

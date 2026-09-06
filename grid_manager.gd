@@ -108,7 +108,7 @@ func generate_grid():
 			multi_mesh.set_instance_transform(index, cell_transform)
 			multi_mesh.set_instance_color(index, color)
 
-func get_random_valid_position() -> Vector3:
+func get_random_valid_cell(exclude_grid_pos: Vector2 = Vector2(-1, -1), allowed_terrains: Array = []) -> Dictionary:
 	var x: int
 	var z: int
 	var cell
@@ -117,7 +117,15 @@ func get_random_valid_position() -> Vector3:
 		x = randi() % grid_width
 		z = randi() % grid_depth
 		cell = grid_logic[x][z]
-		if cell.terrain != "obstacle":
-			break
+		
+		if cell.terrain == "obstacle":
+			continue
+		if cell.grid_pos == exclude_grid_pos:
+			continue
+		# Se uma lista de terrenos permitidos foi passada, a célula precisa estar nela
+		if not allowed_terrains.is_empty() and not cell.terrain in allowed_terrains:
+			continue
+		
+		break
 	
-	return cell.world_pos
+	return cell
