@@ -74,7 +74,24 @@ func animate_visited(visited: Array) -> void:
 		await get_tree().create_timer(visited_animation_delay).timeout
 
 func _on_movement_finished():
-	status_label.text = "Agente chegou! (F para buscar de novo)"
+	status_label.text = "Agente chegou! Reposicionando objetivo..."
+	
+	# Faz a esfera desaparecer visualmente
+	end_marker.visible = false
+	
+	# Limpa o chão iluminado da busca anterior
+	grid_manager.reset_all_cell_colors()
+	
+	# Pequena pausa de 0.5s para dar a sensação clara de teletransporte
+	await get_tree().create_timer(0.5).timeout
+	
+	# Sorteia um novo local aleatório no grid e move o marcador para lá
+	place_end_marker()
+	
+	# Faz a esfera reaparecer no novo local
+	end_marker.visible = true
+	
+	status_label.text = "Novo alvo! (F: buscar | B: trocar algoritmo)"
 
 func toggle_camera():
 	using_free_camera = !using_free_camera
