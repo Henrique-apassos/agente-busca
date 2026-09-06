@@ -1,10 +1,10 @@
 [gd_scene format=3 uid="uid://cmth148s1ow3m"]
 
-[ext_resource type="Script" uid="uid://df5m0gxqfrccg" path="res://camera_3d.gd" id="1_6ba58"]
-[ext_resource type="Script" uid="uid://uilmumcxwbqo" path="res://mundo.gd" id="1_fw4w5"]
-[ext_resource type="Script" uid="uid://cbwekrgp30bng" path="res://grid_manager.gd" id="2_lgngo"]
-[ext_resource type="Script" uid="uid://dqq8pm80o6iev" path="res://end_marker.gd" id="4_otwa2"]
-[ext_resource type="Script" uid="uid://wmcv10lief3b" path="res://agente.gd" id="5_aou4a"]
+[ext_resource type="Script" uid="uid://uilmumcxwbqo" path="res://scripts/world/mundo.gd" id="1_vwj67"]
+[ext_resource type="Script" uid="uid://df5m0gxqfrccg" path="res://scripts/world/camera_3d.gd" id="2_vwj67"]
+[ext_resource type="Script" uid="uid://cbwekrgp30bng" path="res://scripts/world/grid_manager.gd" id="3_vwj67"]
+[ext_resource type="Script" uid="uid://dqq8pm80o6iev" path="res://scripts/entities/end_marker.gd" id="4_kxyy5"]
+[ext_resource type="Script" uid="uid://wmcv10lief3b" path="res://scripts/entities/agente.gd" id="5_6o2rw"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_lgngo"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -55,7 +55,7 @@ material = SubResource("StandardMaterial3D_otwa2")
 size = Vector3(0.6, 0.6, 0.6)
 
 [node name="Mundo" type="Node3D" unique_id=237065845]
-script = ExtResource("1_fw4w5")
+script = ExtResource("1_vwj67")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2098129811]
 environment = SubResource("Environment_otwa2")
@@ -70,10 +70,10 @@ mesh = SubResource("PlaneMesh_ncwlc")
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=1507014806]
 transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 10, 10)
-script = ExtResource("1_6ba58")
+script = ExtResource("2_vwj67")
 
 [node name="GridManager" type="Node3D" parent="." unique_id=321322035]
-script = ExtResource("2_lgngo")
+script = ExtResource("3_vwj67")
 
 [node name="GridVisualizer" type="MultiMeshInstance3D" parent="GridManager" unique_id=905125094]
 multimesh = SubResource("MultiMesh_ncwlc")
@@ -84,12 +84,12 @@ transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 25, 
 [node name="EndMarker" type="MeshInstance3D" parent="." unique_id=297394361]
 material_override = SubResource("StandardMaterial3D_fwvjn")
 mesh = SubResource("SphereMesh_ncwlc")
-script = ExtResource("4_otwa2")
+script = ExtResource("4_kxyy5")
 
 [node name="Agente" type="MeshInstance3D" parent="." unique_id=11234324]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
 mesh = SubResource("PrismMesh_ncwlc")
-script = ExtResource("5_aou4a")
+script = ExtResource("5_6o2rw")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=419264889]
 
