@@ -1,3 +1,27 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+export/
+builds/
+
+# C# / .NET (ARTEFATOS DE COMPILAÇÃO)
+bin/
+obj/
+.mono/
+
+# ARQUIVOS DE USUÁRIO / IDEs
+
+.vscode/
+.vs/
+.idea/
+*.user
+*.suo
+*.sln.docstates
+
+# LIXO DO SISTEMA OPERACIONAL
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+desktop.ini
