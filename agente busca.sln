@@ -1,0 +1,19 @@
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "agente busca", "agente busca.csproj", "{A7D9896D-1FA0-4E2E-AB5E-D16FC075A8AC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+	Debug|Any CPU = Debug|Any CPU
+	ExportDebug|Any CPU = ExportDebug|Any CPU
+	ExportRelease|Any CPU = ExportRelease|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A7D9896D-1FA0-4E2E-AB5E-D16FC075A8AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7D9896D-1FA0-4E2E-AB5E-D16FC075A8AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7D9896D-1FA0-4E2E-AB5E-D16FC075A8AC}.ExportDebug|Any CPU.ActiveCfg = ExportDebug|Any CPU
+		{A7D9896D-1FA0-4E2E-AB5E-D16FC075A8AC}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
+		{A7D9896D-1FA0-4E2E-AB5E-D16FC075A8AC}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
+		{A7D9896D-1FA0-4E2E-AB5E-D16FC075A8AC}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
+	EndGlobalSection
+EndGlobal
