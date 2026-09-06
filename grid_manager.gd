@@ -3,6 +3,7 @@ extends Node3D
 @export var grid_width: int = 50
 @export var grid_depth: int = 50
 @export var cell_spacing: float = 1.0
+@export var elevation_scale: float = 0.25 # Controla o quão alto o terreno pode chegar
 
 # Controles de Geração (Aparecem no Inspetor)
 @export var noise_scale: float = 0.25
@@ -33,12 +34,15 @@ func generate_grid():
 			var terrain_type = ""
 			var color = Color()
 			var move_weight = 1.0
+			var stepped_noise = snapped(noise_val, 0.1)
+			var y_pos = stepped_noise * elevation_scale
 			
 			# LÓGICA DE BORDAS: Lemos do mais profundo para o mais raso
 			if noise_val < water_level:
 				# É ÁGUA (O núcleo mais profundo)
 				terrain_type = "water"
-				
+				# Água fica plana (todas as células de água na mesma altura base)
+				y_pos = water_level * elevation_scale
 				# Calcula o quão profunda a água é (de 0 a 1)
 				var depth = inverse_lerp(water_level, -1.0, noise_val)
 				move_weight = lerp(3.0, 8.0, depth) 
@@ -49,6 +53,8 @@ func generate_grid():
 			elif noise_val < mud_level:
 				# É LAMA (A borda em volta da água, antes da grama)
 				terrain_type = "mud"
+				# Lama sobe gradualmente acompanhando o ruído
+				y_pos = noise_val * elevation_scale
 				
 				# Calcula a umidade da lama (mais perto da água = mais úmido/pesado)
 				# inverse_lerp aqui vai de mud_level (seco/0) até water_level (úmido/1)
@@ -61,6 +67,9 @@ func generate_grid():
 			else:
 				# É GRAMA (O restante do mapa, parte mais alta/seca)
 				terrain_type = "grass"
+				# Grama sobe gradualmente acompanhando o ruído
+				var height_curve = pow(noise_val, 3.0) 
+				y_pos = height_curve * elevation_scale
 				move_weight = 1.0
 				# Um verde estilo pixel art
 				color = Color("53b34f") 
@@ -68,7 +77,7 @@ func generate_grid():
 			# SALVA NA MATRIZ LÓGICA
 			var cell_data = {
 				"grid_pos": Vector2(x, z),
-				"world_pos": Vector3(x * cell_spacing, 0, z * cell_spacing),
+				"world_pos": Vector3(x * cell_spacing, y_pos, z * cell_spacing),
 				"terrain": terrain_type,
 				"weight": move_weight, 
 				"g_cost": 0,
@@ -79,6 +88,6 @@ func generate_grid():
 			
 			# APLICA AO VISUAL
 			var index = x * grid_depth + z
-			var transform = Transform3D().translated(cell_data.world_pos)
-			multi_mesh.set_instance_transform(index, transform)
+			var cell_transform = Transform3D().translated(cell_data.world_pos)
+			multi_mesh.set_instance_transform(index, cell_transform)
 			multi_mesh.set_instance_color(index, color)

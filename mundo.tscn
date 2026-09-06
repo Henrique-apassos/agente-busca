@@ -24,7 +24,7 @@ vertex_color_use_as_albedo = true
 
 [sub_resource type="BoxMesh" id="BoxMesh_fwvjn"]
 material = SubResource("StandardMaterial3D_lgngo")
-size = Vector3(0.9, 0.1, 0.9)
+size = Vector3(1, 0.1, 1)
 
 [sub_resource type="MultiMesh" id="MultiMesh_ncwlc"]
 transform_format = 1
