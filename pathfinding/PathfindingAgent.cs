@@ -18,13 +18,24 @@ public partial class PathfindingAgent : MeshInstance3D
 	[Export] public NodePath GridManagerPath;
 	[Export] public NodePath EndMarkerPath;
 	[Export] public AlgorithmType SelectedAlgorithm = AlgorithmType.BFS;
-	[Export] public float MoveSpeed = 3.0f;
+
+	// Velocidade do agente por tipo de terreno (unidades/segundo)
+	[Export] public float GrassSpeed = 5.0f;  // Grama: mais rápido
+	[Export] public float MudSpeed = 2.5f;    // Lama: velocidade média
+	[Export] public float WaterSpeed = 1.5f;  // Água: mais lento
 
 	private Node _gridManager;
 	private Node3D _endMarker;
 	private GridSnapshot _lastGrid;
 	private List<Vector2I> _lastPath = new();
-	private Queue<Vector3> _moveQueue = new();
+
+	private struct MoveStep
+	{
+		public Vector3 Position;
+		public TerrainType Terrain;
+	}
+
+	private Queue<MoveStep> _moveQueue = new();
 	private bool _isMoving = false;
 
 	public override void _Ready()
@@ -38,8 +49,8 @@ public partial class PathfindingAgent : MeshInstance3D
 		if (!_isMoving || _moveQueue.Count == 0)
 			return;
 
-		Vector3 target = _moveQueue.Peek();
-		Vector3 direction = target - GlobalPosition;
+		MoveStep step = _moveQueue.Peek();
+		Vector3 direction = step.Position - GlobalPosition;
 		float distance = direction.Length();
 
 		if (distance < 0.05f)
@@ -53,7 +64,19 @@ public partial class PathfindingAgent : MeshInstance3D
 			return;
 		}
 
-		GlobalPosition += direction.Normalized() * MoveSpeed * (float)delta;
+		float speed = GetSpeedForTerrain(step.Terrain);
+		GlobalPosition += direction.Normalized() * speed * (float)delta;
+	}
+
+	private float GetSpeedForTerrain(TerrainType terrain)
+	{
+		return terrain switch
+		{
+			TerrainType.Grass => GrassSpeed,
+			TerrainType.Mud => MudSpeed,
+			TerrainType.Water => WaterSpeed,
+			_ => GrassSpeed // Obstáculo nunca deveria entrar aqui, já que é intransitável
+		};
 	}
 
 	public void RunPathfinding()
@@ -87,7 +110,11 @@ public partial class PathfindingAgent : MeshInstance3D
 		for (int i = 1; i < _lastPath.Count; i++)
 		{
 			var cell = _lastGrid.Get(_lastPath[i].X, _lastPath[i].Y);
-			_moveQueue.Enqueue(cell.WorldPos + new Vector3(0, 0.4f, 0));
+			_moveQueue.Enqueue(new MoveStep
+			{
+				Position = cell.WorldPos + new Vector3(0, 0.4f, 0),
+				Terrain = cell.Terrain
+			});
 		}
 		_isMoving = true;
 	}
