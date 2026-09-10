@@ -95,19 +95,26 @@ EndMarkerPath = NodePath("../EndMarker")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=419264889]
 
-[node name="CameraLabel" type="Label" parent="HUD" unique_id=1630828182]
-offset_right = 40.0
-offset_bottom = 23.0
+[node name="InfoPanel" type="VBoxContainer" parent="HUD" unique_id=1747592763]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 50.0
+offset_bottom = 50.0
+
+[node name="CameraLabel" type="Label" parent="HUD/InfoPanel" unique_id=1630828182]
+layout_mode = 2
 text = "Camera: ..."
 
-[node name="AlgorithmLabel" type="Label" parent="HUD" unique_id=779664782]
-offset_top = 30.0
-offset_right = 99.0
-offset_bottom = 53.0
+[node name="AlgorithmLabel" type="Label" parent="HUD/InfoPanel" unique_id=779664782]
+layout_mode = 2
 text = "Algoritmo: ..."
 
-[node name="StatusLabel" type="Label" parent="HUD" unique_id=1002512209]
-offset_top = 60.0
-offset_right = 251.0
-offset_bottom = 83.0
+[node name="StatusLabel" type="Label" parent="HUD/InfoPanel" unique_id=1002512209]
+layout_mode = 2
 text = "Pronto (pressione F para buscar)"
+
+[node name="SearchMetricsLabel" type="Label" parent="HUD/InfoPanel" unique_id=346053990]
+layout_mode = 2
+
+[node name="MovementMetricsLabel" type="Label" parent="HUD/InfoPanel" unique_id=135015796]
+layout_mode = 2

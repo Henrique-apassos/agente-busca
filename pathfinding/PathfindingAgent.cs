@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 public enum AlgorithmType
 {
@@ -12,17 +13,17 @@ public enum AlgorithmType
 
 public partial class PathfindingAgent : MeshInstance3D
 {
-	[Signal] public delegate void SearchCompletedEventHandler(string algorithmName, Godot.Collections.Array visitedOrder, Godot.Collections.Array path, bool found);
-	[Signal] public delegate void MovementFinishedEventHandler();
+	[Signal] public delegate void SearchCompletedEventHandler(string algorithmName, Godot.Collections.Array visitedOrder, Godot.Collections.Array path, bool found, double searchTimeMs, float pathWeight);
+	[Signal] public delegate void MovementProgressEventHandler(double elapsedMs, float weightSoFar);
+	[Signal] public delegate void MovementFinishedEventHandler(double elapsedMs, float weightSoFar);
 
 	[Export] public NodePath GridManagerPath;
 	[Export] public NodePath EndMarkerPath;
 	[Export] public AlgorithmType SelectedAlgorithm = AlgorithmType.BFS;
 
-	// Velocidade do agente por tipo de terreno (unidades/segundo)
-	[Export] public float GrassSpeed = 5.0f;  // Grama: mais rápido
-	[Export] public float MudSpeed = 2.5f;    // Lama: velocidade média
-	[Export] public float WaterSpeed = 1.5f;  // Água: mais lento
+	[Export] public float GrassSpeed = 5.0f;
+	[Export] public float MudSpeed = 2.5f;
+	[Export] public float WaterSpeed = 1.5f;
 
 	private Node _gridManager;
 	private Node3D _endMarker;
@@ -33,10 +34,13 @@ public partial class PathfindingAgent : MeshInstance3D
 	{
 		public Vector3 Position;
 		public TerrainType Terrain;
+		public float Weight;
 	}
 
 	private Queue<MoveStep> _moveQueue = new();
 	private bool _isMoving = false;
+	private Stopwatch _movementStopwatch;
+	private float _weightSoFar = 0f;
 
 	public override void _Ready()
 	{
@@ -55,17 +59,24 @@ public partial class PathfindingAgent : MeshInstance3D
 
 		if (distance < 0.05f)
 		{
+			_weightSoFar += step.Weight;
 			_moveQueue.Dequeue();
+
 			if (_moveQueue.Count == 0)
 			{
 				_isMoving = false;
-				EmitSignal(SignalName.MovementFinished);
+				_movementStopwatch.Stop();
+				EmitSignal(SignalName.MovementFinished, _movementStopwatch.Elapsed.TotalMilliseconds, _weightSoFar);
+				return;
 			}
-			return;
+		}
+		else
+		{
+			float speed = GetSpeedForTerrain(step.Terrain);
+			GlobalPosition += direction.Normalized() * speed * (float)delta;
 		}
 
-		float speed = GetSpeedForTerrain(step.Terrain);
-		GlobalPosition += direction.Normalized() * speed * (float)delta;
+		EmitSignal(SignalName.MovementProgress, _movementStopwatch.Elapsed.TotalMilliseconds, _weightSoFar);
 	}
 
 	private float GetSpeedForTerrain(TerrainType terrain)
@@ -75,7 +86,7 @@ public partial class PathfindingAgent : MeshInstance3D
 			TerrainType.Grass => GrassSpeed,
 			TerrainType.Mud => MudSpeed,
 			TerrainType.Water => WaterSpeed,
-			_ => GrassSpeed // Obstáculo nunca deveria entrar aqui, já que é intransitável
+			_ => GrassSpeed
 		};
 	}
 
@@ -86,8 +97,17 @@ public partial class PathfindingAgent : MeshInstance3D
 		Vector2I goal = WorldToGrid(_endMarker.GlobalPosition);
 
 		IPathfindingAlgorithm algorithm = CreateAlgorithm();
+
+		var stopwatch = Stopwatch.StartNew();
 		var result = algorithm.FindPath(_lastGrid, start, goal);
+		stopwatch.Stop();
+		double searchTimeMs = stopwatch.Elapsed.TotalMilliseconds;
+
 		_lastPath = result.Path;
+
+		float pathWeight = 0f;
+		foreach (var p in result.Path)
+			pathWeight += _lastGrid.Get(p.X, p.Y).Weight;
 
 		var visitedArr = new Godot.Collections.Array();
 		foreach (var v in result.VisitedOrder)
@@ -97,7 +117,7 @@ public partial class PathfindingAgent : MeshInstance3D
 		foreach (var p in result.Path)
 			pathArr.Add(p);
 
-		EmitSignal(SignalName.SearchCompleted, GetAlgorithmName(), visitedArr, pathArr, result.Found);
+		EmitSignal(SignalName.SearchCompleted, GetAlgorithmName(), visitedArr, pathArr, result.Found, searchTimeMs, pathWeight);
 	}
 
 	public void FollowPath()
@@ -106,16 +126,18 @@ public partial class PathfindingAgent : MeshInstance3D
 			return;
 
 		_moveQueue.Clear();
-		// Pula o índice 0: é a célula onde o agente já está
 		for (int i = 1; i < _lastPath.Count; i++)
 		{
 			var cell = _lastGrid.Get(_lastPath[i].X, _lastPath[i].Y);
 			_moveQueue.Enqueue(new MoveStep
 			{
 				Position = cell.WorldPos + new Vector3(0, 0.4f, 0),
-				Terrain = cell.Terrain
+				Terrain = cell.Terrain,
+				Weight = cell.Weight
 			});
 		}
+		_weightSoFar = 0f;
+		_movementStopwatch = Stopwatch.StartNew();
 		_isMoving = true;
 	}
 
