@@ -15,10 +15,14 @@ var using_free_camera: bool = true
 var end_marker_grid_pos: Vector2 = Vector2(-1, -1)
 var visited_animation_delay: float = 0.01
 
-# Guardados na primeira vez, pra poder "voltar no tempo" e comparar algoritmos
 var initial_agent_position: Vector3
 var initial_goal_position: Vector3
 var initial_goal_grid_pos: Vector2
+
+var is_searching: bool = false
+var path_found: bool = false
+var cancel_requested: bool = false
+var restart_requested: bool = false
 
 func _ready():
 	free_camera.make_current()
@@ -56,30 +60,57 @@ func _input(event):
 			KEY_F:
 				start_search()
 			KEY_G:
-				agente.FollowPath()
+				try_follow_path()
 			KEY_B:
 				cycle_algorithm()
 			KEY_T:
 				reset_to_initial_state()
 
 func start_search():
+	if is_searching:
+		# Cancela a animação em andamento e já agenda uma busca nova
+		cancel_requested = true
+		restart_requested = true
+		status_label.text = "Cancelando busca anterior..."
+		return
+	_begin_search()
+
+func _begin_search():
+	is_searching = true
+	path_found = false
+	cancel_requested = false
 	status_label.text = "Buscando caminho..."
 	search_metrics_label.text = ""
 	movement_metrics_label.text = ""
 	grid_manager.reset_all_cell_colors()
 	agente.RunPathfinding()
 
+func try_follow_path():
+	if is_searching:
+		status_label.text = "Aguarde a busca terminar antes de mover (G)"
+		return
+	if not path_found:
+		status_label.text = "Nenhum caminho encontrado ainda. Aperte F primeiro."
+		return
+	agente.FollowPath()
+
 func cycle_algorithm():
 	agente.CycleAlgorithm()
 	algorithm_label.text = "Algoritmo: %s" % agente.GetAlgorithmName()
 
 func reset_to_initial_state():
+	cancel_requested = true # corta qualquer animação em andamento também
+	restart_requested = false
+
 	agente.ResetToPosition(initial_agent_position)
 	end_marker.global_position = initial_goal_position
 	end_marker.visible = true
 	end_marker_grid_pos = initial_goal_grid_pos
 
 	grid_manager.reset_all_cell_colors()
+
+	is_searching = false
+	path_found = false
 
 	algorithm_label.text = "Algoritmo: %s" % agente.GetAlgorithmName()
 	status_label.text = "Teste reiniciado — mesmo mapa/início/fim (F: buscar)"
@@ -92,6 +123,14 @@ func _on_search_completed(algorithm_name: String, visited: Array, path: Array, f
 
 	grid_manager.reset_all_cell_colors()
 
+	if cancel_requested:
+		is_searching = false
+		path_found = false
+		if restart_requested:
+			restart_requested = false
+			_begin_search()
+		return
+
 	if found:
 		for cell in path:
 			grid_manager.highlight_cell(cell.x, cell.y)
@@ -101,10 +140,15 @@ func _on_search_completed(algorithm_name: String, visited: Array, path: Array, f
 
 	search_metrics_label.text = "Tempo real do algoritmo: %.3f ms | Nós visitados: %d" % [search_time_ms, visited.size()]
 
+	path_found = found
+	is_searching = false
+
 func animate_visited(visited: Array) -> void:
 	var start_ticks = Time.get_ticks_msec()
 	var count = 0
 	for cell in visited:
+		if cancel_requested:
+			break
 		count += 1
 		grid_manager.darken_cell(cell.x, cell.y)
 		var elapsed_sec = (Time.get_ticks_msec() - start_ticks) / 1000.0
