@@ -25,3 +25,10 @@ obj/
 Thumbs.db
 ehthumbs.db
 desktop.ini
+
+# Segurança extra: caso algum export saia fora de export/ ou builds/ por engano
+*.pck
+*.exe
+*.x86_64
+*.dmg
+*.app/
