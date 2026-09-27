@@ -13,7 +13,12 @@ extends Node3D
 
 var using_free_camera: bool = true
 var end_marker_grid_pos: Vector2 = Vector2(-1, -1)
-var visited_animation_delay: float = 0.01 # ajuste pra deixar a busca mais rápida/lenta de assistir
+var visited_animation_delay: float = 0.01
+
+# Guardados na primeira vez, pra poder "voltar no tempo" e comparar algoritmos
+var initial_agent_position: Vector3
+var initial_goal_position: Vector3
+var initial_goal_grid_pos: Vector2
 
 func _ready():
 	free_camera.make_current()
@@ -21,12 +26,16 @@ func _ready():
 	place_end_marker()
 	place_agent()
 
+	initial_agent_position = agente.global_position
+	initial_goal_position = end_marker.global_position
+	initial_goal_grid_pos = end_marker_grid_pos
+
 	agente.connect("SearchCompleted", _on_search_completed)
 	agente.connect("MovementProgress", _on_movement_progress)
 	agente.connect("MovementFinished", _on_movement_finished)
 
 	algorithm_label.text = "Algoritmo: %s" % agente.GetAlgorithmName()
-	status_label.text = "Pronto (F: buscar | G: seguir | B: trocar algoritmo)"
+	status_label.text = "Pronto (F: buscar | G: seguir | B: trocar algoritmo | T: reiniciar teste)"
 	search_metrics_label.text = ""
 	movement_metrics_label.text = ""
 
@@ -50,19 +59,34 @@ func _input(event):
 				agente.FollowPath()
 			KEY_B:
 				cycle_algorithm()
+			KEY_T:
+				reset_to_initial_state()
 
 func start_search():
 	status_label.text = "Buscando caminho..."
 	search_metrics_label.text = ""
 	movement_metrics_label.text = ""
-	grid_manager.reset_all_cell_colors() # limpa destaque de uma busca anterior
+	grid_manager.reset_all_cell_colors()
 	agente.RunPathfinding()
 
 func cycle_algorithm():
 	agente.CycleAlgorithm()
 	algorithm_label.text = "Algoritmo: %s" % agente.GetAlgorithmName()
 
-func _on_search_completed(algorithm_name: String, visited: Array, path: Array, found: bool, search_time_ms: float, path_weight: float):
+func reset_to_initial_state():
+	agente.ResetToPosition(initial_agent_position)
+	end_marker.global_position = initial_goal_position
+	end_marker.visible = true
+	end_marker_grid_pos = initial_goal_grid_pos
+
+	grid_manager.reset_all_cell_colors()
+
+	algorithm_label.text = "Algoritmo: %s" % agente.GetAlgorithmName()
+	status_label.text = "Teste reiniciado — mesmo mapa/início/fim (F: buscar)"
+	search_metrics_label.text = ""
+	movement_metrics_label.text = ""
+
+func _on_search_completed(algorithm_name: String, visited: Array, path: Array, found: bool, search_time_ms: float, _path_weight: float):
 	algorithm_label.text = "Algoritmo: %s" % algorithm_name
 	await animate_visited(visited)
 
@@ -84,7 +108,7 @@ func animate_visited(visited: Array) -> void:
 		count += 1
 		grid_manager.darken_cell(cell.x, cell.y)
 		var elapsed_sec = (Time.get_ticks_msec() - start_ticks) / 1000.0
-		search_metrics_label.text = "Buscando... %.2fs | nós visitados: %d/%d" % [elapsed_sec, count, visited.size()]
+		search_metrics_label.text = "Visualizando exploração: %.2fs (%d/%d nós)" % [elapsed_sec, count, visited.size()]
 		await get_tree().create_timer(visited_animation_delay).timeout
 
 func _on_movement_progress(elapsed_ms: float, weight_so_far: float):
@@ -94,22 +118,13 @@ func _on_movement_finished(elapsed_ms: float, weight_so_far: float):
 	status_label.text = "Agente chegou! Reposicionando objetivo..."
 	movement_metrics_label.text = "Tempo de movimentação: %.2fs | Peso percorrido: %.2f" % [elapsed_ms / 1000.0, weight_so_far]
 
-	# Faz a esfera do objetivo desaparecer visualmente
 	end_marker.visible = false
-
-	# Limpa o chão iluminado da busca anterior
 	grid_manager.reset_all_cell_colors()
-
-	# Pequena pausa pra dar a sensação clara de teletransporte
 	await get_tree().create_timer(0.5).timeout
-
-	# Sorteia um novo local aleatório no grid e move o marcador pra lá
 	place_end_marker()
-
-	# Faz a esfera reaparecer no novo local
 	end_marker.visible = true
 
-	status_label.text = "Novo alvo! (F: buscar | B: trocar algoritmo)"
+	status_label.text = "Novo alvo! (F: buscar | B: trocar algoritmo | T: voltar ao teste original)"
 
 func toggle_camera():
 	using_free_camera = !using_free_camera

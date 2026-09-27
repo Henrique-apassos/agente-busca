@@ -140,6 +140,15 @@ public partial class PathfindingAgent : MeshInstance3D
 		_movementStopwatch = Stopwatch.StartNew();
 		_isMoving = true;
 	}
+	
+	public void ResetToPosition(Vector3 pos)
+{
+	_isMoving = false;
+	_moveQueue.Clear();
+	_weightSoFar = 0f;
+	_lastPath.Clear();
+	GlobalPosition = pos;
+}
 
 	public void CycleAlgorithm()
 	{
