@@ -16,17 +16,19 @@ public partial class PathfindingAgent : MeshInstance3D
 	[Signal] public delegate void SearchCompletedEventHandler(string algorithmName, Godot.Collections.Array visitedOrder, Godot.Collections.Array path, bool found, double searchTimeMs, float pathWeight);
 	[Signal] public delegate void MovementProgressEventHandler(double elapsedMs, float weightSoFar);
 	[Signal] public delegate void MovementFinishedEventHandler(double elapsedMs, float weightSoFar);
+	[Signal] public delegate void FoodCollectedEventHandler();
 
 	[Export] public NodePath GridManagerPath;
 	[Export] public NodePath EndMarkerPath;
 	[Export] public AlgorithmType SelectedAlgorithm = AlgorithmType.BFS;
 
-	[Export] public float GrassSpeed = 5.0f;
-	[Export] public float MudSpeed = 2.5f;
-	[Export] public float WaterSpeed = 1.5f;
+	[Export] public float GrassSpeed = 4.0f;
+	[Export] public float MudSpeed = 2.0f;
+	[Export] public float WaterSpeed = 1.0f;
 
 	private Node _gridManager;
 	private Node3D _endMarker;
+	private Area3D _collisionArea;
 	private GridSnapshot _lastGrid;
 	private List<Vector2I> _lastPath = new();
 
@@ -46,6 +48,19 @@ public partial class PathfindingAgent : MeshInstance3D
 	{
 		_gridManager = GetNode(GridManagerPath);
 		_endMarker = GetNode<Node3D>(EndMarkerPath);
+
+		_collisionArea = GetNode<Area3D>("CollisionArea");
+		_collisionArea.AreaEntered += OnAreaEntered;
+	}
+
+	private void OnAreaEntered(Area3D area)
+	{
+		// Confere se a área que entrou em contato pertence à comida (EndMarker),
+		// comparando o nó pai em vez do nome, pra não depender de string exata
+		if (area.GetParent() == _endMarker)
+		{
+			EmitSignal(SignalName.FoodCollected);
+		}
 	}
 
 	public override void _Process(double delta)
@@ -140,15 +155,20 @@ public partial class PathfindingAgent : MeshInstance3D
 		_movementStopwatch = Stopwatch.StartNew();
 		_isMoving = true;
 	}
-	
+
+	public void ClearPath()
+	{
+		_lastPath.Clear();
+	}
+
 	public void ResetToPosition(Vector3 pos)
-{
-	_isMoving = false;
-	_moveQueue.Clear();
-	_weightSoFar = 0f;
-	_lastPath.Clear();
-	GlobalPosition = pos;
-}
+	{
+		_isMoving = false;
+		_moveQueue.Clear();
+		_weightSoFar = 0f;
+		_lastPath.Clear();
+		GlobalPosition = pos;
+	}
 
 	public void CycleAlgorithm()
 	{

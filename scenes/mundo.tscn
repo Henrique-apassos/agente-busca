@@ -45,6 +45,9 @@ grow = true
 radius = 0.3
 height = 0.6
 
+[sub_resource type="SphereShape3D" id="SphereShape3D_yxjm8"]
+radius = 0.4
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_otwa2"]
 albedo_color = Color(0.78431374, 0, 0.14901961, 1)
 metallic = 0.72
@@ -53,6 +56,9 @@ metallic_specular = 0.59
 [sub_resource type="PrismMesh" id="PrismMesh_ncwlc"]
 material = SubResource("StandardMaterial3D_otwa2")
 size = Vector3(0.6, 0.6, 0.6)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_hha8x"]
+radius = 0.4
 
 [node name="Mundo" type="Node3D" unique_id=237065845]
 script = ExtResource("1_vwj67")
@@ -86,12 +92,22 @@ material_override = SubResource("StandardMaterial3D_fwvjn")
 mesh = SubResource("SphereMesh_ncwlc")
 script = ExtResource("4_kxyy5")
 
+[node name="FoodArea" type="Area3D" parent="EndMarker" unique_id=1386852291]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EndMarker/FoodArea" unique_id=295364055]
+shape = SubResource("SphereShape3D_yxjm8")
+
 [node name="Agente" type="MeshInstance3D" parent="." unique_id=11234324]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
 mesh = SubResource("PrismMesh_ncwlc")
 script = ExtResource("5_vwj67")
 GridManagerPath = NodePath("../GridManager")
 EndMarkerPath = NodePath("../EndMarker")
+
+[node name="CollisionArea" type="Area3D" parent="Agente" unique_id=1510740363]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Agente/CollisionArea" unique_id=1945209100]
+shape = SubResource("SphereShape3D_hha8x")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=419264889]
 
@@ -118,3 +134,10 @@ layout_mode = 2
 
 [node name="MovementMetricsLabel" type="Label" parent="HUD/InfoPanel" unique_id=135015796]
 layout_mode = 2
+
+[node name="FoodCountLabel" type="Label" parent="HUD" unique_id=1343211668]
+offset_left = 979.0
+offset_top = 10.0
+offset_right = 1230.0
+offset_bottom = 33.0
+text = "Comida coletada: 0"

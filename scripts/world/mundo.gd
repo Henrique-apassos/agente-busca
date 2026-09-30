@@ -7,6 +7,7 @@ extends Node3D
 @onready var status_label = $HUD/InfoPanel/StatusLabel
 @onready var search_metrics_label = $HUD/InfoPanel/SearchMetricsLabel
 @onready var movement_metrics_label = $HUD/InfoPanel/MovementMetricsLabel
+@onready var food_count_label = $HUD/FoodCountLabel
 @onready var grid_manager = $GridManager
 @onready var end_marker = $EndMarker
 @onready var agente = $Agente
@@ -23,6 +24,7 @@ var is_searching: bool = false
 var path_found: bool = false
 var cancel_requested: bool = false
 var restart_requested: bool = false
+var foods_collected: int = 0
 
 func _ready():
 	free_camera.make_current()
@@ -37,11 +39,13 @@ func _ready():
 	agente.connect("SearchCompleted", _on_search_completed)
 	agente.connect("MovementProgress", _on_movement_progress)
 	agente.connect("MovementFinished", _on_movement_finished)
+	agente.connect("FoodCollected", _on_food_collected)
 
 	algorithm_label.text = "Algoritmo: %s" % agente.GetAlgorithmName()
 	status_label.text = "Pronto (F: buscar | G: seguir | B: trocar algoritmo | T: reiniciar teste)"
 	search_metrics_label.text = ""
 	movement_metrics_label.text = ""
+	food_count_label.text = "Comida coletada: 0"
 
 func place_end_marker():
 	var goal_cell = grid_manager.get_random_valid_cell()
@@ -68,7 +72,6 @@ func _input(event):
 
 func start_search():
 	if is_searching:
-		# Cancela a animação em andamento e já agenda uma busca nova
 		cancel_requested = true
 		restart_requested = true
 		status_label.text = "Cancelando busca anterior..."
@@ -99,7 +102,7 @@ func cycle_algorithm():
 	algorithm_label.text = "Algoritmo: %s" % agente.GetAlgorithmName()
 
 func reset_to_initial_state():
-	cancel_requested = true # corta qualquer animação em andamento também
+	cancel_requested = true
 	restart_requested = false
 
 	agente.ResetToPosition(initial_agent_position)
@@ -111,6 +114,8 @@ func reset_to_initial_state():
 
 	is_searching = false
 	path_found = false
+	foods_collected = 0
+	food_count_label.text = "Comida coletada: 0"
 
 	algorithm_label.text = "Algoritmo: %s" % agente.GetAlgorithmName()
 	status_label.text = "Teste reiniciado — mesmo mapa/início/fim (F: buscar)"
@@ -159,16 +164,29 @@ func _on_movement_progress(elapsed_ms: float, weight_so_far: float):
 	movement_metrics_label.text = "Movendo... tempo: %.2fs | peso percorrido: %.2f" % [elapsed_ms / 1000.0, weight_so_far]
 
 func _on_movement_finished(elapsed_ms: float, weight_so_far: float):
-	status_label.text = "Agente chegou! Reposicionando objetivo..."
 	movement_metrics_label.text = "Tempo de movimentação: %.2fs | Peso percorrido: %.2f" % [elapsed_ms / 1000.0, weight_so_far]
+	status_label.text = "Movimentação concluída (F: nova busca | T: reiniciar teste)"
+
+func _on_food_collected():
+	foods_collected += 1
+	food_count_label.text = "Comida coletada: %d" % foods_collected
+	status_label.text = "Comida coletada! Nova comida surgindo..."
+
+	agente.ClearPath()
+	path_found = false
 
 	end_marker.visible = false
+	var food_area = end_marker.get_node("FoodArea")
+	food_area.set_deferred("monitorable", false)
+
 	grid_manager.reset_all_cell_colors()
 	await get_tree().create_timer(0.5).timeout
+
 	place_end_marker()
 	end_marker.visible = true
+	food_area.set_deferred("monitorable", true)
 
-	status_label.text = "Novo alvo! (F: buscar | B: trocar algoritmo | T: voltar ao teste original)"
+	status_label.text = "Nova comida! (F: buscar | B: trocar algoritmo)"
 
 func toggle_camera():
 	using_free_camera = !using_free_camera
