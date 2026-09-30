@@ -9,3 +9,5 @@ public class PathfindingResult
     public float TotalCost = 0f;
     public bool Found = false;
 }
+
+public int MaxFrontier = 0;
