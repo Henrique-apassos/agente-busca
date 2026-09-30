@@ -6,10 +6,10 @@ using System.Diagnostics;
 public enum AlgorithmType
 {
 	BFS,
-	DFS,
 	AStar,
 	Dijkstra,
-	GreedyBestFirst
+	GreedyBestFirst,
+	DFS
 }
 
 public partial class PathfindingAgent : MeshInstance3D
@@ -191,10 +191,10 @@ public partial class PathfindingAgent : MeshInstance3D
 		return SelectedAlgorithm switch
 		{
 			AlgorithmType.BFS => "BFS",
-			AlgorithmType.DFS => "DFS",
 			AlgorithmType.AStar => "A*",
 			AlgorithmType.Dijkstra => "Dijkstra",
 			AlgorithmType.GreedyBestFirst => "Greedy Best-First",
+			AlgorithmType.DFS => "DFS",
 			_ => "Desconhecido"
 		};
 	}
@@ -204,10 +204,10 @@ public partial class PathfindingAgent : MeshInstance3D
 		return SelectedAlgorithm switch
 		{
 			AlgorithmType.BFS => new BfsAlgorithm(),
-			AlgorithmType.DFS => new DfsAlgorithm(),
 			AlgorithmType.AStar => new AStarAlgorithm(),
 			AlgorithmType.Dijkstra => new DijkstraAlgorithm(),
 			AlgorithmType.GreedyBestFirst => new GreedyBestFirstAlgorithm(),
+			AlgorithmType.DFS => new DfsAlgorithm(),
 			_ => new BfsAlgorithm()
 		};
 	}
