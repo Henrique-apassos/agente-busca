@@ -17,12 +17,11 @@ public class DijkstraAlgorithm : IPathfindingAlgorithm
 		while (pq.Count > 0)
 		{
 			if (pq.Count > result.MaxFrontier) result.MaxFrontier = pq.Count;
-    		var current = pq.Dequeue();
-			
 			var current = pq.Dequeue();
 			if (visited.Contains(current)) continue;
 			visited.Add(current);
 			result.VisitedOrder.Add(current);
+
 
 			if (current == goal)
 			{

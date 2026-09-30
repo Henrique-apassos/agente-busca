@@ -16,8 +16,6 @@ public class BfsAlgorithm : IPathfindingAlgorithm
 		while (queue.Count > 0)
 		{
 			if (queue.Count > result.MaxFrontier) result.MaxFrontier = queue.Count;
-    		var current = queue.Dequeue();
-
 			var current = queue.Dequeue();
 			result.VisitedOrder.Add(current);
 
