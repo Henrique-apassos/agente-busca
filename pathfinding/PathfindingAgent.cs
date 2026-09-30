@@ -173,9 +173,9 @@ public partial class PathfindingAgent : MeshInstance3D
 		return SelectedAlgorithm switch
 		{
 			AlgorithmType.BFS => new BfsAlgorithm(),
-			// AlgorithmType.AStar => new AStarAlgorithm(),
-			// AlgorithmType.Dijkstra => new DijkstraAlgorithm(),
-			// AlgorithmType.GreedyBestFirst => new GreedyBestFirstAlgorithm(),
+			AlgorithmType.AStar => new AStarAlgorithm(),
+			AlgorithmType.Dijkstra => new DijkstraAlgorithm(),
+			AlgorithmType.GreedyBestFirst => new GreedyBestFirstAlgorithm(),
 			_ => new BfsAlgorithm()
 		};
 	}
