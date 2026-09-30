@@ -68,27 +68,36 @@ public partial class PathfindingAgent : MeshInstance3D
 		if (!_isMoving || _moveQueue.Count == 0)
 			return;
 
-		MoveStep step = _moveQueue.Peek();
-		Vector3 direction = step.Position - GlobalPosition;
-		float distance = direction.Length();
+		float remaining = (float)delta;
 
-		if (distance < 0.05f)
+		while (remaining > 0f && _moveQueue.Count > 0)
 		{
-			_weightSoFar += step.Weight;
-			_moveQueue.Dequeue();
-
-			if (_moveQueue.Count == 0)
-			{
-				_isMoving = false;
-				_movementStopwatch.Stop();
-				EmitSignal(SignalName.MovementFinished, _movementStopwatch.Elapsed.TotalMilliseconds, _weightSoFar);
-				return;
-			}
-		}
-		else
-		{
+			MoveStep step = _moveQueue.Peek();
+			Vector3 direction = step.Position - GlobalPosition;
+			float distance = direction.Length();
 			float speed = GetSpeedForTerrain(step.Terrain);
-			GlobalPosition += direction.Normalized() * speed * (float)delta;
+			float canMove = speed * remaining;
+
+			if (canMove >= distance)
+			{
+				GlobalPosition = step.Position;
+				remaining -= distance > 0f ? distance / speed : 0f;
+				_weightSoFar += step.Weight;
+				_moveQueue.Dequeue();
+
+				if (_moveQueue.Count == 0)
+				{
+					_isMoving = false;
+					_movementStopwatch.Stop();
+					EmitSignal(SignalName.MovementFinished, _movementStopwatch.Elapsed.TotalMilliseconds, _weightSoFar);
+					return;
+				}
+			}
+			else
+			{
+				GlobalPosition += direction.Normalized() * canMove;
+				remaining = 0f;
+			}
 		}
 
 		EmitSignal(SignalName.MovementProgress, _movementStopwatch.Elapsed.TotalMilliseconds, _weightSoFar);
@@ -193,9 +202,9 @@ public partial class PathfindingAgent : MeshInstance3D
 		return SelectedAlgorithm switch
 		{
 			AlgorithmType.BFS => new BfsAlgorithm(),
-			// AlgorithmType.AStar => new AStarAlgorithm(),
-			// AlgorithmType.Dijkstra => new DijkstraAlgorithm(),
-			// AlgorithmType.GreedyBestFirst => new GreedyBestFirstAlgorithm(),
+			AlgorithmType.AStar => new AStarAlgorithm(),
+			AlgorithmType.Dijkstra => new DijkstraAlgorithm(),
+			AlgorithmType.GreedyBestFirst => new GreedyBestFirstAlgorithm(),
 			_ => new BfsAlgorithm()
 		};
 	}
