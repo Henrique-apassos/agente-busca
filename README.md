@@ -2,7 +2,7 @@
 
 Projeto em **Godot 4.7** que simula um agente navegando por um terreno gerado
 proceduralmente até encontrar um objetivo, usando algoritmos clássicos de
-busca (BFS, A*, Dijkstra, Greedy Best-First).
+busca (BFS, DFS, A*, Dijkstra, Greedy Best-First).
 
 O mundo (terreno, câmera, cena) é feito em **GDScript**. Os algoritmos de
 busca e o comportamento do agente são feitos em **C#**, aproveitando o
@@ -29,7 +29,7 @@ suporte nativo do Godot 4 pras duas linguagens conviverem no mesmo projeto.
 | `R` | Recentraliza a câmera livre na posição inicial (com o mouse capturado) |
 | `F` | Inicia a busca com o algoritmo selecionado |
 | `G` | Agente segue o último caminho encontrado |
-| `B` | Troca o algoritmo de busca (BFS → A* → Dijkstra → Greedy) |
+| `B` | Troca o algoritmo de busca (BFS → DFS → A* → Dijkstra → Greedy) |
 
 Movimentação da câmera livre: `WASD` move no plano horizontal, `Espaço`/`Ctrl`
 sobe/desce, `Shift` acelera (sprint), mouse olha ao redor, `ESC` solta o

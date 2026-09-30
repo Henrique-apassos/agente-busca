@@ -5,11 +5,11 @@ extends Node3D
 @export var cell_spacing: float = 1.0
 @export var elevation_scale: float = 0.25
 
-@export var noise_scale: float = 0.25
-@export_range(-1.0, 1.0) var water_level: float = -0.4
+@export var noise_scale: float = 0.25 # Variabilidade do terreno
+@export_range(-1.0, 1.0) var water_level: float = -0.4 
 @export_range(-1.0, 1.0) var mud_level: float = 0.1
 
-@export_range(-1.0, 1.0) var obstacle_threshold: float = 0.6
+@export_range(-1.0, 1.0) var obstacle_threshold: float = 0.5 # Altera a quantidade de obistáculos
 @export var obstacle_height: float = 1.0
 
 var noise: FastNoiseLite
