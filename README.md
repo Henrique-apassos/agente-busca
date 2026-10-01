@@ -225,6 +225,22 @@ Use o `BfsAlgorithm.cs` como modelo de referência — o padrão de registrar
 fila/heap) deve ser seguido por todos os algoritmos, pra visualização e
 comparação de métricas ficarem consistentes.
 
+## Análise dos algoritmos
+
+Os cinco algoritmos foram comparados em 300 mapas aleatórios (mesmo mapa, início
+e comida para todos), medindo tempo, custo do caminho, nós expandidos e fronteira.
+
+| Algoritmo | Custo médio | Nós expandidos | Tempo médio (µs) |
+|---|---|---|---|
+| Largura (BFS) | 73,6 | 1215 | 438 |
+| Profundidade (DFS) | 1456 | 1143 | 526 |
+| Custo Uniforme (Dijkstra) | 53,8 | 1203 | 839 |
+| Gulosa | 77,3 | 39 | 30 |
+| A* | 53,8 | 484 | 374 |
+
+O **A\*** é o melhor no geral: caminho ótimo com ~60% menos nós que o Custo
+Uniforme. Detalhes, metodologia e como reproduzir em [ANALISE.md](ANALISE.md).
+
 ## Tecnologias
 
 - [Godot Engine 4.7](https://godotengine.org/) (.NET/C# build)
