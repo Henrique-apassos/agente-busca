@@ -1,25 +1,34 @@
 # Agente Busca
 
-Projeto em **Godot 4.7** que simula um agente navegando por um terreno gerado
-proceduralmente até encontrar um objetivo, usando algoritmos clássicos de
-busca (BFS, DFS, A*, Dijkstra, Greedy Best-First).
+Projeto em **Godot 4.7** que simula um agente autônomo coletando comida num
+terreno gerado proceduralmente, usando algoritmos clássicos de busca em
+grafo (BFS, DFS, A*, Dijkstra, Greedy Best-First) pra decidir o caminho.
 
-O mundo (terreno, câmera, cena) é feito em **GDScript**. Os algoritmos de
-busca e o comportamento do agente são feitos em **C#**, aproveitando o
+O mundo (terreno, câmera, cena, HUD) é feito em **GDScript**. Os algoritmos
+de busca e o comportamento do agente são feitos em **C#**, aproveitando o
 suporte nativo do Godot 4 pras duas linguagens conviverem no mesmo projeto.
 
-## Visão geral
+## Visão geral / ciclo de funcionamento
 
-- O terreno é gerado por ruído (Simplex noise), formando **grama**, **lama**,
-  **água** e **obstáculos** (paredes intransitáveis, geradas em clusters via
-  um segundo campo de ruído).
-- O **objetivo** (esfera amarela) nasce em qualquer célula que não seja
-  obstáculo.
-- O **agente** (prisma triangular) nasce em terreno seco (grama ou lama),
-  nunca em cima de água, obstáculo ou do próprio objetivo.
-- Ao acionar a busca, o agente calcula o caminho com o algoritmo selecionado,
-  o grid escurece célula por célula conforme é explorado, e o caminho final
-  fica destacado quando encontrado.
+1. O terreno é gerado por ruído (Simplex noise), formando 4 tipos de célula:
+   **grama** (custo baixo), **lama** (custo médio), **água** (custo alto) e
+   **obstáculo** (intransitável — paredes geradas em clusters via um segundo
+   campo de ruído)
+2. O usuário escolhe o algoritmo de busca (tecla `B`)
+3. O **agente** (prisma triangular) nasce em terreno seco (grama ou lama),
+   nunca em cima de obstáculo
+4. A **comida** (esfera amarela) nasce em qualquer célula que não seja
+   obstáculo
+5. Ao acionar a busca (`F`), o agente usa a posição da comida como estado
+   objetivo e sua própria posição como estado inicial
+6. O algoritmo selecionado calcula o caminho; o grid escurece célula por
+   célula conforme é explorado (visualização da busca), e o caminho final
+   fica destacado em dourado quando encontrado
+7. O agente segue o caminho (`G`), com velocidade proporcional ao custo do
+   terreno de cada célula (mais devagar na água, mais rápido na grama)
+8. Quando o agente colide fisicamente com a comida (via `Area3D`/Jolt
+   Physics), ela é contabilizada e some; uma nova comida nasce em outra
+   posição aleatória automaticamente, repetindo o ciclo a partir do passo 4
 
 ## Controles
 
@@ -27,13 +36,27 @@ suporte nativo do Godot 4 pras duas linguagens conviverem no mesmo projeto.
 |---|---|
 | `C` | Alterna entre câmera livre (voo) e câmera top-down |
 | `R` | Recentraliza a câmera livre na posição inicial (com o mouse capturado) |
-| `F` | Inicia a busca com o algoritmo selecionado |
+| `F` | Inicia a busca com o algoritmo selecionado (aperte de novo pra cancelar a animação em andamento e já começar outra) |
 | `G` | Agente segue o último caminho encontrado |
-| `B` | Troca o algoritmo de busca (BFS → DFS → A* → Dijkstra → Greedy) |
+| `B` | Troca o algoritmo de busca (BFS → DFS → A* → Dijkstra → Greedy Best-First) |
+| `T` | Reinicia agente, comida e contador pra posição/estado inicial — útil pra comparar algoritmos no mesmo cenário |
 
 Movimentação da câmera livre: `WASD` move no plano horizontal, `Espaço`/`Ctrl`
 sobe/desce, `Shift` acelera (sprint), mouse olha ao redor, `ESC` solta o
 cursor e clique esquerdo captura de novo.
+
+## HUD
+
+O HUD mostra, em tempo real:
+
+- Modo de câmera atual
+- Algoritmo selecionado
+- Status da ação atual (buscando, caminho encontrado, movendo, etc.)
+- Métricas da busca: tempo real do algoritmo (medido com `Stopwatch`,
+  independente da animação visual) e número de nós visitados
+- Métricas do movimento: tempo decorrido e custo (peso) acumulado conforme o
+  agente atravessa o terreno
+- Contador de comidas coletadas (canto superior direito)
 
 ## Setup do ambiente
 
@@ -166,39 +189,61 @@ Abaixo, os comandos específicos por sistema operacional.
 
 ```
 agente-busca/
-├── assets/                     # Ícones e recursos visuais
-├── pathfinding/                # C# — algoritmos de busca e agente
-│   ├── GridSnapshot.cs         # Representação do grid pro C# (célula, vizinhos)
-│   ├── PathfindingResult.cs    # Resultado padronizado (caminho, nós visitados)
-│   ├── IPathfindingAlgorithm.cs# Interface que todo algoritmo implementa
-│   ├── PathfindingAgent.cs     # Ponte com o GDScript + controle do agente
-│   └── BfsAlgorithm.cs         # Implementação de referência (BFS)
+├── assets/                           # Ícones e recursos visuais
+├── pathfinding/                      # C# — contrato compartilhado e agente
+│   ├── GridSnapshot.cs               # Representação do grid pro C# (célula, vizinhos, custo)
+│   ├── PathfindingResult.cs          # Resultado padronizado (caminho, nós visitados, custo total)
+│   ├── IPathfindingAlgorithm.cs      # Interface que todo algoritmo implementa
+│   ├── PathfindingAgent.cs           # Ponte com o GDScript, movimento, colisão, sinais pro HUD
+│   └── algorithms/                   # Um arquivo por algoritmo — evita conflito de merge
+│       ├── BfsAlgorithm.cs
+│       ├── DfsAlgorithm.cs
+│       ├── AStarAlgorithm.cs
+│       ├── DijkstraAlgorithm.cs
+│       └── GreedyBestFirstAlgorithm.cs
 ├── scenes/
-│   └── mundo.tscn              # Cena principal
-└── scripts/                    # GDScript — mundo, câmera, entidades visuais
+│   └── mundo.tscn                    # Cena principal (grid, agente, comida, câmeras, HUD)
+└── scripts/                          # GDScript — mundo, câmera, entidades visuais
     ├── entities/
     │   ├── agente.gd
     │   └── end_marker.gd
     └── world/
-        ├── camera_3d.gd
-        ├── grid_manager.gd     # Geração do terreno + funções de cor/visualização
-        └── mundo.gd            # Orquestração da cena, HUD, input
+        ├── camera_3d.gd              # Câmera livre (WASD + mouse) e reset (R)
+        ├── grid_manager.gd           # Geração do terreno + funções de cor/visualização
+        └── mundo.gd                  # Orquestração da cena, HUD, input, ciclo de comida
 ```
+
+## Algoritmos de busca
+
+Todos implementam `IPathfindingAlgorithm` e seguem a mesma convenção: cada
+nó é adicionado a `result.VisitedOrder` no momento em que é **expandido**
+(retirado da fila/pilha/heap), garantindo que a visualização da busca e as
+métricas comparadas no HUD sejam consistentes entre os algoritmos.
+
+| Algoritmo | Estrutura de dados | Considera o custo do terreno? | Garante caminho ótimo? |
+|---|---|---|---|
+| BFS | Fila (FIFO) | Não (conta só passos) | Só se todos os custos forem iguais |
+| DFS | Pilha (LIFO) | Não | Não |
+| Dijkstra | Fila de prioridade | Sim | Sim |
+| A* | Fila de prioridade + heurística (Manhattan) | Sim | Sim (heurística é admissível) |
+| Greedy Best-First | Fila de prioridade (só heurística) | Não | Não |
 
 ## Como adicionar um novo algoritmo de busca
 
 Cada algoritmo é uma classe C# independente, isolada num arquivo dentro de
-`pathfinding/`. Isso evita conflitos de merge entre os membros do time.
+`pathfinding/algorithms/`. Isso evita conflitos de merge entre os membros
+do time.
 
-1. Crie um arquivo novo, ex: `pathfinding/AStarAlgorithm.cs`
+1. Crie um arquivo novo, ex: `pathfinding/algorithms/MeuAlgoritmo.cs`
 2. Implemente a interface `IPathfindingAlgorithm`:
 
    ```csharp
    using Godot;
+   using System.Collections.Generic;
 
-   public class AStarAlgorithm : IPathfindingAlgorithm
+   public class MeuAlgoritmo : IPathfindingAlgorithm
    {
-       public string AlgorithmName => "A*";
+       public string AlgorithmName => "Meu Algoritmo";
 
        public PathfindingResult FindPath(GridSnapshot grid, Vector2I start, Vector2I goal)
        {
@@ -211,22 +256,21 @@ Cada algoritmo é uma classe C# independente, isolada num arquivo dentro de
    }
    ```
 
-3. Em `PathfindingAgent.cs`, descomente/adicione a linha correspondente no
-   `CreateAlgorithm()`:
+3. Adicione o novo caso em `AlgorithmType` (enum no topo de `PathfindingAgent.cs`)
+4. Em `PathfindingAgent.cs`, registre a linha correspondente em `GetAlgorithmName()`
+   e em `CreateAlgorithm()`:
 
    ```csharp
-   AlgorithmType.AStar => new AStarAlgorithm(),
+   AlgorithmType.MeuAlgoritmo => new MeuAlgoritmo(),
    ```
 
-4. Compile e teste trocando o algoritmo pela tecla `B` in-game.
+5. Compile e teste trocando o algoritmo pela tecla `B` in-game.
 
-Use o `BfsAlgorithm.cs` como modelo de referência — o padrão de registrar
-`VisitedOrder` no momento em que o nó é expandido (retirado da
-fila/heap) deve ser seguido por todos os algoritmos, pra visualização e
-comparação de métricas ficarem consistentes.
+Use `BfsAlgorithm.cs` ou `AStarAlgorithm.cs` como modelo de referência pro
+padrão de `VisitedOrder` descrito acima.
 
 ## Tecnologias
 
 - [Godot Engine 4.7](https://godotengine.org/) (.NET/C# build)
 - GDScript + C#
-- Jolt Physics
+- Jolt Physics (colisão agente ↔ comida via `Area3D`)
