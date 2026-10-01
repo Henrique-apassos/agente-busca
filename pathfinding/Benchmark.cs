@@ -15,7 +15,7 @@ public partial class Benchmark : Node
 	const float NoiseScale = 0.25f;
 	const float WaterLevel = -0.4f;
 	const float MudLevel = 0.1f;
-	const float ObstacleThreshold = 0.5f;
+	const float ObstacleThreshold = 0.6f;
 
 	// Parâmetros do teste
 	const int Scenarios = 300;

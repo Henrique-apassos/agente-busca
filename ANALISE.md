@@ -1,4 +1,3 @@
-
 # Análise dos algoritmos de busca
 
 Comparação de desempenho dos cinco algoritmos implementados no projeto:
@@ -8,15 +7,15 @@ Comparação de desempenho dos cinco algoritmos implementados no projeto:
 ## Metodologia
 
 Cada algoritmo foi executado em **300 mapas aleatórios** (50×50, com os mesmos
-parâmetros de geração do jogo: grama, lama, água e obstáculos). Em cada mapa,
-os cinco algoritmos receberam **o mesmo grid, o mesmo ponto de partida e a
-mesma comida**, o que torna a comparação justa. O início sempre cai em grama ou
-lama e a comida em qualquer célula livre, como no jogo.
+parâmetros de geração do jogo: grama, lama, água e obstáculos, com
+`obstacle_threshold = 0,6`). Em cada mapa, os cinco algoritmos receberam **o
+mesmo grid, o mesmo ponto de partida e a mesma comida**, o que torna a
+comparação justa. O início sempre cai em grama ou lama e a comida em qualquer
+célula livre, como no jogo.
 
-Um dos 300 cenários não tinha caminho entre início e comida e foi descartado,
-restando **299 cenários**. Os mapas usam seed fixa, então o teste é
-reproduzível. Foram descartadas 30 execuções de aquecimento (JIT) antes das
-medições.
+Todos os 300 cenários tinham caminho entre início e comida. Os mapas usam seed
+fixa, então o teste é reproduzível. Foram descartadas 30 execuções de
+aquecimento (JIT) antes das medições.
 
 ### Pesos dos terrenos
 
@@ -45,15 +44,15 @@ Greedy guarda o número de passos, e não o peso.
 
 ## Resultados
 
-Média ± desvio padrão em 299 mapas.
+Média ± desvio padrão em 300 mapas.
 
 | Algoritmo | Tempo (µs) | Custo do caminho | Acima do ótimo | Ótimo em | Nós expandidos | Fronteira máx. | Passos |
 |---|---|---|---|---|---|---|---|
-| Largura (BFS) | 438 ± 286 | 73,6 ± 42,8 | +33% | 14% | 1215 | 54 | 34,6 |
-| Profundidade (DFS) | 526 ± 371 | 1456 ± 920 | +3063% | 0% | 1143 | 888 | 669,7 |
-| Custo Uniforme (Dijkstra) | 839 ± 656 | **53,8 ± 26,3** | 0% | 100% | 1203 | 77 | 37,1 |
-| Gulosa | **30 ± 23** | 77,3 ± 47,0 | +38% | 12% | **39** | 66 | 35,9 |
-| A* | 374 ± 382 | **53,8 ± 26,3** | 0% | 100% | 484 | 97 | 37,1 |
+| Largura (BFS) | 654 ± 483 | 74,1 ± 41,9 | +37% | 11% | 1286 | 57 | 34,6 |
+| Profundidade (DFS) | 775 ± 542 | 1646 ± 1070 | +3208% | 0,3% | 1263 | 1022 | 760,1 |
+| Custo Uniforme (Dijkstra) | 1134 ± 980 | **52,7 ± 24,6** | 0% | 100% | 1265 | 82 | 37,0 |
+| Gulosa | **37 ± 41** | 75,2 ± 43,0 | +39% | 11% | **36** | 67 | 35,0 |
+| A* | 475 ± 522 | **52,7 ± 24,6** | 0% | 100% | 483 | 102 | 37,0 |
 
 A coluna "Acima do ótimo" é a média, por cenário, da diferença percentual
 entre o custo do algoritmo e o custo ótimo.
@@ -61,8 +60,8 @@ entre o custo do algoritmo e o custo ótimo.
 ## Interpretação
 
 **A\* é o melhor no geral.** Encontrou o caminho de custo mínimo em 100% dos
-mapas, igual ao Custo Uniforme, mas expandindo cerca de 60% menos nós (484
-contra 1203) e levando menos da metade do tempo. A heurística de Manhattan é
+mapas, igual ao Custo Uniforme, mas expandindo cerca de 62% menos nós (483
+contra 1265) e levando menos da metade do tempo. A heurística de Manhattan é
 **admissível** neste ambiente, porque o menor peso de terreno é 1 (grama):
 ela nunca superestima o custo restante, e por isso o A* mantém a garantia de
 otimalidade. Os custos idênticos de A* e Dijkstra em todos os cenários
@@ -72,20 +71,20 @@ confirmam isso.
 por ordem de custo acumulado (f = g), sem nenhuma informação sobre onde está a
 comida. Por isso é o mais lento dos cinco.
 
-**Gulosa** foi a mais rápida, com cerca de 30 µs e apenas 39 nós expandidos.
+**Gulosa** foi a mais rápida, com cerca de 37 µs e apenas 36 nós expandidos.
 Porém, como usa só h(n) e ignora o custo já gasto, seu caminho custou em média
-38% acima do ótimo e só foi ótimo em 12% dos mapas: ela atravessa água e lama
+39% acima do ótimo e só foi ótimo em 11% dos mapas: ela atravessa água e lama
 sem perceber que são caras.
 
 **Largura** encontra o caminho com menos passos (34,6), mas, como não
 considera os pesos, trata grama e água como se custassem o mesmo. Resultado:
-33% acima do ótimo e ótimo em apenas 14% dos mapas, quando o caminho mais
+37% acima do ótimo e ótimo em apenas 11% dos mapas, quando o caminho mais
 curto por acaso também era o mais barato.
 
-**Profundidade** teve o pior desempenho. Os caminhos têm quase 670 passos em
-média, num grid onde o caminho mais curto tem cerca de 35, e o custo médio é
-27 vezes o ótimo. Ela segue um ramo até o fim antes de voltar, não oferece
-nenhuma garantia de qualidade, e a pilha chegou a guardar 888 nós pendentes.
+**Profundidade** teve o pior desempenho. Os caminhos têm 760 passos em média,
+num grid onde o caminho mais curto tem cerca de 35, e o custo médio é 31 vezes
+o ótimo. Ela segue um ramo até o fim antes de voltar, não oferece nenhuma
+garantia de qualidade, e a pilha chegou a guardar mais de mil nós pendentes.
 
 ### Resumo
 
@@ -104,22 +103,23 @@ caminho ótimo com bem menos esforço de busca que o Custo Uniforme.
 ### Tempo × nós expandidos
 
 O tempo não é proporcional ao número de nós expandidos. BFS e DFS usam fila e
-pilha, que são baratas (cerca de 0,4 µs por nó), enquanto Dijkstra, A* e
-Gulosa usam fila de prioridade (cerca de 0,7 a 0,8 µs por nó). Por isso a BFS
+pilha, que são baratas (cerca de 0,5 a 0,6 µs por nó), enquanto Dijkstra, A* e
+Gulosa usam fila de prioridade (cerca de 0,9 a 1,0 µs por nó). Por isso a BFS
 é mais rápida que o Dijkstra mesmo expandindo quase o mesmo número de nós, e a
 vantagem do A* vem principalmente de expandir bem menos nós.
 
 ## Limitações
 
-- O tempo em microssegundos depende da máquina; vale comparar as proporções
-  entre os algoritmos, e não os valores absolutos.
+- O tempo em microssegundos depende da máquina e varia entre execuções; vale
+  comparar as proporções entre os algoritmos, e não os valores absolutos.
 - A fronteira máxima do Dijkstra e do A* é levemente superestimada, porque a
   fila de prioridade pode conter o mesmo nó mais de uma vez (a versão antiga é
   ignorada ao sair da fila). Por isso ela não é diretamente comparável à da BFS
   e da DFS.
-- Os resultados valem para este gerador de mapas (50×50, pesos de 1 a 8). Mapas
-  com outra proporção de obstáculos ou outros pesos podem mudar as diferenças.
-- Cenários sem caminho (1 em 300) foram descartados.
+- Os resultados valem para este gerador de mapas (50×50, pesos de 1 a 8,
+  `obstacle_threshold = 0,6`). Mapas com outra proporção de obstáculos ou
+  outros pesos podem mudar as diferenças. Em um teste anterior com
+  `obstacle_threshold = 0,5` (mais obstáculos) as conclusões foram as mesmas.
 
 ## Como reproduzir
 
