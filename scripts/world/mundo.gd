@@ -86,6 +86,7 @@ func _begin_search():
 	search_metrics_label.text = ""
 	movement_metrics_label.text = ""
 	grid_manager.reset_all_cell_colors()
+	grid_manager.clear_path_border()
 	agente.RunPathfinding()
 
 func try_follow_path():
@@ -127,6 +128,7 @@ func _on_search_completed(algorithm_name: String, visited: Array, path: Array, f
 	await animate_visited(visited)
 
 	grid_manager.reset_all_cell_colors()
+	grid_manager.clear_path_border()
 
 	if cancel_requested:
 		is_searching = false
@@ -137,8 +139,7 @@ func _on_search_completed(algorithm_name: String, visited: Array, path: Array, f
 		return
 
 	if found:
-		for cell in path:
-			grid_manager.highlight_cell(cell.x, cell.y)
+		grid_manager.show_path_border(path)
 		status_label.text = "Caminho encontrado! (G para seguir)"
 	else:
 		status_label.text = "Nenhum caminho encontrado."
@@ -169,11 +170,12 @@ func _on_movement_finished(elapsed_ms: float, weight_so_far: float):
 
 func _on_food_collected():
 	foods_collected += 1
-	food_count_label.text = "Comidas coletadas: %d" % foods_collected
+	food_count_label.text = "Comida coletada: %d" % foods_collected
 	status_label.text = "Comida coletada! Nova comida surgindo..."
 
 	agente.ClearPath()
 	path_found = false
+	grid_manager.clear_path_border()
 
 	end_marker.visible = false
 	var food_area = end_marker.get_node("FoodArea")

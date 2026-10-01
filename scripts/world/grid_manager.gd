@@ -5,16 +5,17 @@ extends Node3D
 @export var cell_spacing: float = 1.0
 @export var elevation_scale: float = 0.25
 
-@export var noise_scale: float = 0.25 # Variabilidade do terreno
-@export_range(-1.0, 1.0) var water_level: float = -0.4 
+@export var noise_scale: float = 0.25
+@export_range(-1.0, 1.0) var water_level: float = -0.4
 @export_range(-1.0, 1.0) var mud_level: float = 0.1
 
-@export_range(-1.0, 1.0) var obstacle_threshold: float = 0.5 # Altera a quantidade de obistáculos
+@export_range(-1.0, 1.0) var obstacle_threshold: float = 0.6
 @export var obstacle_height: float = 1.0
 
 var noise: FastNoiseLite
 var obstacle_noise: FastNoiseLite
 @onready var grid_visualizer = $GridVisualizer
+@onready var path_visualizer = $PathVisualizer
 var grid_logic = []
 
 func _ready():
@@ -26,6 +27,7 @@ func _ready():
 	obstacle_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	obstacle_noise.seed = randi()
 
+	_setup_path_visualizer()
 	generate_grid()
 
 func generate_grid():
@@ -77,7 +79,7 @@ func generate_grid():
 				"world_pos": Vector3(x * cell_spacing, y_pos, z * cell_spacing),
 				"terrain": terrain_type,
 				"weight": move_weight,
-				"color": color, # <- guardamos a cor original pra poder restaurar depois
+				"color": color,
 				"g_cost": 0,
 				"h_cost": 0,
 				"parent": null
@@ -134,8 +136,6 @@ func get_grid_snapshot() -> Array:
 			})
 	return flat
 
-# --- Funções de cor usadas na visualização da busca ---
-
 func set_cell_color(x: int, z: int, color: Color):
 	var index = x * grid_depth + z
 	grid_visualizer.multimesh.set_instance_color(index, color)
@@ -147,9 +147,75 @@ func darken_cell(x: int, z: int):
 	set_cell_color(x, z, grid_logic[x][z].color.darkened(0.6))
 
 func highlight_cell(x: int, z: int):
-	set_cell_color(x, z, Color(1.0, 0.95, 0.3)) # destaque dourado
+	set_cell_color(x, z, Color(1.0, 0.95, 0.3))
 
 func reset_all_cell_colors():
 	for x in range(grid_width):
 		for z in range(grid_depth):
 			reset_cell_color(x, z)
+
+# --- Visualização do caminho como moldura (não pinta a célula inteira) ---
+
+func _setup_path_visualizer():
+	var border_mesh = _build_border_mesh(cell_spacing * 0.95, cell_spacing * 0.12)
+
+	var material = StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = Color(1.0, 0.85, 0.2)
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED # renderiza dos dois lados, não depende do winding
+	path_visualizer.material_override = material
+
+	var mm = MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = border_mesh
+	mm.instance_count = 0
+	path_visualizer.multimesh = mm
+
+func _build_border_mesh(size: float, thickness: float) -> ArrayMesh:
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+
+	var half_size = size / 2.0
+	var inner = half_size - thickness
+
+	var outer = [
+		Vector3(-half_size, 0, -half_size),
+		Vector3(half_size, 0, -half_size),
+		Vector3(half_size, 0, half_size),
+		Vector3(-half_size, 0, half_size)
+	]
+	var inner_pts = [
+		Vector3(-inner, 0, -inner),
+		Vector3(inner, 0, -inner),
+		Vector3(inner, 0, inner),
+		Vector3(-inner, 0, inner)
+	]
+
+	for i in range(4):
+		var o1 = outer[i]
+		var o2 = outer[(i + 1) % 4]
+		var i1 = inner_pts[i]
+		var i2 = inner_pts[(i + 1) % 4]
+
+		st.add_vertex(o1)
+		st.add_vertex(o2)
+		st.add_vertex(i1)
+
+		st.add_vertex(o2)
+		st.add_vertex(i2)
+		st.add_vertex(i1)
+
+	return st.commit()
+
+func show_path_border(path_cells: Array):
+	var mm = path_visualizer.multimesh
+	mm.instance_count = path_cells.size()
+	for i in range(path_cells.size()):
+		var cell_vec = path_cells[i]
+		var cell = grid_logic[cell_vec.x][cell_vec.y]
+		var pos = cell.world_pos + Vector3(0, 0.08, 0) # acima da superfície do tile (que fica em y_pos + 0.05)
+		var t = Transform3D(Basis(), pos)
+		mm.set_instance_transform(i, t)
+
+func clear_path_border():
+	path_visualizer.multimesh.instance_count = 0
