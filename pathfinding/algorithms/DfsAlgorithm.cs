@@ -15,6 +15,7 @@ public class DfsAlgorithm : IPathfindingAlgorithm
 
 		while (pilha.Count > 0)
 		{
+			if (pilha.Count > resultado.MaxFrontier) resultado.MaxFrontier = pilha.Count;
 			var atual = pilha.Pop();
 			if (visitados.Contains(atual)) continue;
 			visitados.Add(atual);

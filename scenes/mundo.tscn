@@ -67,7 +67,7 @@ script = ExtResource("1_vwj67")
 environment = SubResource("Environment_otwa2")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=723225820]
-transform = Transform3D(-0.8660254, -0.4602525, 0.19536556, 0, 0.39073107, 0.92050487, -0.50000006, 0.7971806, -0.33838302, 0, 0, 0)
+transform = Transform3D(0.07573068, 0.91786146, -0.389609, -1.2904784e-08, 0.39073107, 0.92050487, 0.99712825, -0.06971043, 0.029590368, 0, 0, 0)
 shadow_enabled = true
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1492198447]

@@ -155,9 +155,7 @@ public partial class PathfindingAgent : MeshInstance3D
 
 		_lastPath = result.Path;
 
-		float pathWeight = 0f;
-		foreach (var p in result.Path)
-			pathWeight += _lastGrid.Get(p.X, p.Y).Weight;
+		float pathWeight = PathMetrics.WeightedCost(_lastGrid, result.Path);
 
 		var visitedArr = new Godot.Collections.Array();
 		foreach (var v in result.VisitedOrder)

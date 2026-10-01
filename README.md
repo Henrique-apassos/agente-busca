@@ -269,6 +269,22 @@ do time.
 Use `BfsAlgorithm.cs` ou `AStarAlgorithm.cs` como modelo de referência pro
 padrão de `VisitedOrder` descrito acima.
 
+## Análise dos algoritmos
+
+Os cinco algoritmos foram comparados em 300 mapas aleatórios (mesmo mapa, início
+e comida para todos), medindo tempo, custo do caminho, nós expandidos e fronteira.
+
+| Algoritmo | Custo médio | Nós expandidos | Tempo médio (µs) |
+|---|---|---|---|
+| Largura (BFS) | 74,1 | 1286 | 654 |
+| Profundidade (DFS) | 1646 | 1263 | 775 |
+| Custo Uniforme (Dijkstra) | 52,7 | 1265 | 1134 |
+| Gulosa | 75,2 | 36 | 37 |
+| A* | 52,7 | 483 | 475 |
+
+O **A\*** é o melhor no geral: caminho ótimo com ~62% menos nós que o Custo
+Uniforme. Detalhes, metodologia e como reproduzir em [ANALISE.md](ANALISE.md).
+
 ## Tecnologias
 
 - [Godot Engine 4.7](https://godotengine.org/) (.NET/C# build)

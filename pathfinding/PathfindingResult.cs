@@ -8,4 +8,5 @@ public class PathfindingResult
     public int NodesExplored => VisitedOrder.Count;
     public float TotalCost = 0f;
     public bool Found = false;
+    public int MaxFrontier = 0;
 }
