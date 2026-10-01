@@ -276,13 +276,13 @@ e comida para todos), medindo tempo, custo do caminho, nós expandidos e frontei
 
 | Algoritmo | Custo médio | Nós expandidos | Tempo médio (µs) |
 |---|---|---|---|
-| Largura (BFS) | 73,6 | 1215 | 438 |
-| Profundidade (DFS) | 1456 | 1143 | 526 |
-| Custo Uniforme (Dijkstra) | 53,8 | 1203 | 839 |
-| Gulosa | 77,3 | 39 | 30 |
-| A* | 53,8 | 484 | 374 |
+| Largura (BFS) | 74,1 | 1286 | 654 |
+| Profundidade (DFS) | 1646 | 1263 | 775 |
+| Custo Uniforme (Dijkstra) | 52,7 | 1265 | 1134 |
+| Gulosa | 75,2 | 36 | 37 |
+| A* | 52,7 | 483 | 475 |
 
-O **A\*** é o melhor no geral: caminho ótimo com ~60% menos nós que o Custo
+O **A\*** é o melhor no geral: caminho ótimo com ~62% menos nós que o Custo
 Uniforme. Detalhes, metodologia e como reproduzir em [ANALISE.md](ANALISE.md).
 
 ## Tecnologias
