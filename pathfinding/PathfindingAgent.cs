@@ -26,6 +26,7 @@ public partial class PathfindingAgent : MeshInstance3D
 	[Export] public float GrassSpeed = 4.0f;
 	[Export] public float MudSpeed = 2.0f;
 	[Export] public float WaterSpeed = 1.0f;
+	[Export] public float TurnSpeed = 10.0f; // quão rápido ele gira pra encarar a nova direção
 
 	private Node _gridManager;
 	private Node3D _endMarker;
@@ -101,7 +102,31 @@ public partial class PathfindingAgent : MeshInstance3D
 			}
 		}
 
+		if (_moveQueue.Count > 0)
+		{
+			Vector3 facingDirection = _moveQueue.Peek().Position - GlobalPosition;
+			FaceDirection(facingDirection, (float)delta);
+		}
+
 		EmitSignal(SignalName.MovementProgress, _movementStopwatch.Elapsed.TotalMilliseconds, _weightSoFar);
+	}
+
+	private void FaceDirection(Vector3 direction, float delta)
+	{
+		direction.Y = 0; // só gira no eixo horizontal (yaw), não inclina subindo/descendo
+		if (direction.LengthSquared() < 0.0001f)
+			return;
+
+		Basis targetBasis = Basis.LookingAt(direction.Normalized(), Vector3.Up);
+		Quaternion targetRotation = targetBasis.GetRotationQuaternion();
+		Quaternion currentRotation = Transform.Basis.GetRotationQuaternion();
+
+		float weight = Mathf.Clamp(TurnSpeed * delta, 0f, 1f);
+		Quaternion newRotation = currentRotation.Slerp(targetRotation, weight);
+
+		Transform3D t = Transform;
+		t.Basis = new Basis(newRotation);
+		Transform = t;
 	}
 
 	private float GetSpeedForTerrain(TerrainType terrain)
