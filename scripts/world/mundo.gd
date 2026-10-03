@@ -21,6 +21,7 @@ var initial_goal_position: Vector3
 var initial_goal_grid_pos: Vector2
 
 var is_searching: bool = false
+var is_moving: bool = false
 var path_found: bool = false
 var cancel_requested: bool = false
 var restart_requested: bool = false
@@ -42,7 +43,7 @@ func _ready():
 	agente.connect("FoodCollected", _on_food_collected)
 
 	algorithm_label.text = "Algoritmo: %s" % agente.GetAlgorithmName()
-	status_label.text = "Pronto (F: buscar | G: seguir | B: trocar algoritmo | T: reiniciar teste)"
+	status_label.text = "Pronto (F: buscar | G: seguir | B: trocar algoritmo | T: reiniciar teste | N: mover comida)"
 	search_metrics_label.text = ""
 	movement_metrics_label.text = ""
 	food_count_label.text = "Comidas coletadas: 0"
@@ -69,6 +70,8 @@ func _input(event):
 				cycle_algorithm()
 			KEY_T:
 				reset_to_initial_state()
+			KEY_N:
+				relocate_food()
 
 func start_search():
 	if is_searching:
@@ -96,11 +99,22 @@ func try_follow_path():
 	if not path_found:
 		status_label.text = "Nenhum caminho encontrado ainda. Aperte F primeiro."
 		return
+	is_moving = true
 	agente.FollowPath()
 
 func cycle_algorithm():
 	agente.CycleAlgorithm()
 	algorithm_label.text = "Algoritmo: %s" % agente.GetAlgorithmName()
+
+func relocate_food():
+	if is_searching or is_moving:
+		status_label.text = "Aguarde terminar antes de mover a comida."
+		return
+	place_end_marker()
+	path_found = false
+	grid_manager.reset_all_cell_colors()
+	grid_manager.clear_path_border()
+	status_label.text = "Comida reposicionada! (F: buscar)"
 
 func reset_to_initial_state():
 	cancel_requested = true
@@ -114,6 +128,7 @@ func reset_to_initial_state():
 	grid_manager.reset_all_cell_colors()
 
 	is_searching = false
+	is_moving = false
 	path_found = false
 	foods_collected = 0
 	food_count_label.text = "Comidas coletadas: 0"
@@ -165,6 +180,7 @@ func _on_movement_progress(elapsed_ms: float, weight_so_far: float):
 	movement_metrics_label.text = "Movendo... tempo: %.2fs | peso percorrido: %.2f" % [elapsed_ms / 1000.0, weight_so_far]
 
 func _on_movement_finished(elapsed_ms: float, weight_so_far: float):
+	is_moving = false
 	movement_metrics_label.text = "Tempo de movimentação: %.2fs | Peso percorrido: %.2f" % [elapsed_ms / 1000.0, weight_so_far]
 	status_label.text = "Movimentação concluída (F: nova busca | T: reiniciar teste)"
 
