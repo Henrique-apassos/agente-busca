@@ -40,6 +40,8 @@ suporte nativo do Godot 4 pras duas linguagens conviverem no mesmo projeto.
 | `G` | Agente segue o último caminho encontrado |
 | `B` | Troca o algoritmo de busca (BFS → DFS → A* → Dijkstra → Greedy Best-First) |
 | `T` | Reinicia agente, comida e contador pra posição/estado inicial — útil pra comparar algoritmos no mesmo cenário |
+| `M` | Gera um mapa novo no nível atual |
+| `L` | Troca o nível (Fácil → Médio → Difícil) e gera um mapa novo |
 
 Movimentação da câmera livre: `WASD` move no plano horizontal, `Espaço`/`Ctrl`
 sobe/desce, `Shift` acelera (sprint), mouse olha ao redor, `ESC` solta o

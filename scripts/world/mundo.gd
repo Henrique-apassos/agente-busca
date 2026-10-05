@@ -8,6 +8,7 @@ const STEP_EXPANDED := 1
 @onready var top_camera = $TopCamera
 @onready var camera_label = $HUD/InfoPanel/CameraLabel
 @onready var algorithm_label = $HUD/InfoPanel/AlgorithmLabel
+@onready var nivel_label = $HUD/InfoPanel/NivelLabel
 @onready var status_label = $HUD/InfoPanel/StatusLabel
 @onready var search_metrics_label = $HUD/InfoPanel/SearchMetricsLabel
 @onready var movement_metrics_label = $HUD/InfoPanel/MovementMetricsLabel
@@ -48,7 +49,8 @@ func _ready():
 	agente.connect("FoodCollected", _on_food_collected)
 
 	algorithm_label.text = "Algoritmo: %s" % agente.GetAlgorithmName()
-	status_label.text = "Pronto (F: buscar | G: seguir | B: trocar algoritmo | V: fronteira | T: reiniciar teste | N: mover comida | F11: tela cheia | Q: sair)"
+	nivel_label.text = "Nível: %s" % grid_manager.nivel_atual
+	status_label.text = "Pronto (F: buscar | G: seguir | B: trocar algoritmo | V: fronteira | T: reiniciar teste | N: mover comida | M: novo mapa | L: trocar nível | F11: tela cheia | Q: sair)"
 	search_metrics_label.text = ""
 	movement_metrics_label.text = ""
 	food_count_label.text = "Comidas coletadas: 0"
@@ -79,6 +81,10 @@ func _input(event):
 				reset_to_initial_state()
 			KEY_N:
 				relocate_food()
+			KEY_M:
+				trocar_mapa()
+			KEY_L:
+				trocar_mapa(grid_manager.proximo_nivel())
 			KEY_F11:
 				toggle_fullscreen()
 			KEY_Q:
@@ -130,6 +136,27 @@ func relocate_food():
 	grid_manager.reset_all_cell_colors()
 	grid_manager.clear_path_border()
 	status_label.text = "Comida reposicionada! (F: buscar)"
+
+func trocar_mapa(nivel: String = grid_manager.nivel_atual):
+	if is_searching or is_moving:
+		status_label.text = "Aguarde terminar antes de trocar o mapa."
+		return
+
+	grid_manager.gerar_novo_mapa(nivel)
+	agente.ResetToPosition(agente.global_position)
+	place_end_marker()
+	place_agent()
+	end_marker.visible = true
+
+	initial_agent_position = agente.global_position
+	initial_goal_position = end_marker.global_position
+	initial_goal_grid_pos = end_marker_grid_pos
+
+	path_found = false
+	nivel_label.text = "Nível: %s" % grid_manager.nivel_atual
+	status_label.text = "Novo mapa (%s) gerado! (F: buscar | M: outro mapa | L: trocar nível)" % grid_manager.nivel_atual
+	search_metrics_label.text = ""
+	movement_metrics_label.text = ""
 
 func reset_to_initial_state():
 	cancel_requested = true

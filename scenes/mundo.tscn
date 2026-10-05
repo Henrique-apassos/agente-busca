@@ -131,6 +131,10 @@ text = "Camera: ..."
 layout_mode = 2
 text = "Algoritmo: ..."
 
+[node name="NivelLabel" type="Label" parent="HUD/InfoPanel" unique_id=1482093517]
+layout_mode = 2
+text = "Nível: ..."
+
 [node name="StatusLabel" type="Label" parent="HUD/InfoPanel" unique_id=1002512209]
 layout_mode = 2
 text = "Pronto (pressione F para buscar)"

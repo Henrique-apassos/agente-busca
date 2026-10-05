@@ -12,6 +12,14 @@ extends Node3D
 @export_range(-1.0, 1.0) var obstacle_threshold: float = 0.6
 @export var obstacle_height: float = 1.0
 
+const NIVEIS = {
+	"Fácil": {"obstaculos": 0.8, "agua": -0.6, "lama": -0.2},
+	"Médio": {"obstaculos": 0.6, "agua": -0.4, "lama": 0.1},
+	"Difícil": {"obstaculos": 0.4, "agua": -0.25, "lama": 0.3}
+}
+const ORDEM_NIVEIS = ["Fácil", "Médio", "Difícil"]
+var nivel_atual: String = "Médio"
+
 var noise: FastNoiseLite
 var obstacle_noise: FastNoiseLite
 @onready var grid_visualizer = $GridVisualizer
@@ -28,9 +36,29 @@ func _ready():
 	obstacle_noise.seed = randi()
 
 	_setup_path_visualizer()
+	aplicar_nivel(nivel_atual)
+	generate_grid()
+
+func aplicar_nivel(nivel: String):
+	nivel_atual = nivel
+	var parametros = NIVEIS[nivel]
+	obstacle_threshold = parametros.obstaculos
+	water_level = parametros.agua
+	mud_level = parametros.lama
+
+func proximo_nivel() -> String:
+	var indice = ORDEM_NIVEIS.find(nivel_atual)
+	return ORDEM_NIVEIS[(indice + 1) % ORDEM_NIVEIS.size()]
+
+func gerar_novo_mapa(nivel: String = nivel_atual):
+	aplicar_nivel(nivel)
+	noise.seed = randi()
+	obstacle_noise.seed = randi()
+	clear_path_border()
 	generate_grid()
 
 func generate_grid():
+	grid_logic.clear()
 	var multi_mesh = grid_visualizer.multimesh
 	multi_mesh.instance_count = grid_width * grid_depth
 
