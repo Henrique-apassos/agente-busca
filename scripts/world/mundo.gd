@@ -48,7 +48,7 @@ func _ready():
 	agente.connect("FoodCollected", _on_food_collected)
 
 	algorithm_label.text = "Algoritmo: %s" % agente.GetAlgorithmName()
-	status_label.text = "Pronto (F: buscar | G: seguir | B: trocar algoritmo | V: fronteira | T: reiniciar teste | N: mover comida)"
+	status_label.text = "Pronto (F: buscar | G: seguir | B: trocar algoritmo | V: fronteira | T: reiniciar teste | N: mover comida | F11: tela cheia | Q: sair)"
 	search_metrics_label.text = ""
 	movement_metrics_label.text = ""
 	food_count_label.text = "Comidas coletadas: 0"
@@ -79,6 +79,10 @@ func _input(event):
 				reset_to_initial_state()
 			KEY_N:
 				relocate_food()
+			KEY_F11:
+				toggle_fullscreen()
+			KEY_Q:
+				get_tree().quit()
 
 func toggle_frontier():
 	show_frontier = !show_frontier
@@ -244,6 +248,12 @@ func _on_food_collected():
 	food_area.set_deferred("monitorable", true)
 
 	status_label.text = "Nova comida! (F: buscar | B: trocar algoritmo)"
+
+func toggle_fullscreen():
+	if DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED)
+	else:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 
 func toggle_camera():
 	using_free_camera = !using_free_camera
