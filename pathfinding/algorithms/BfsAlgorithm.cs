@@ -5,19 +5,21 @@ public class BfsAlgorithm : IPathfindingAlgorithm
 {
 	public string AlgorithmName => "BFS";
 
-	public PathfindingResult FindPath(GridSnapshot grid, Vector2I start, Vector2I goal)
+	public PathfindingResult FindPath(GridSnapshot grid, Vector2I start, Vector2I goal, bool recordSteps = false)
 	{
 		var result = new PathfindingResult();
 		var visited = new HashSet<Vector2I> { start };
 		var cameFrom = new Dictionary<Vector2I, Vector2I>();
 		var queue = new Queue<Vector2I>();
 		queue.Enqueue(start);
+		if (recordSteps) result.Steps.Add(new SearchStep(SearchStepType.FrontierAdded, start));
 
 		while (queue.Count > 0)
 		{
 			if (queue.Count > result.MaxFrontier) result.MaxFrontier = queue.Count;
 			var current = queue.Dequeue();
 			result.VisitedOrder.Add(current);
+			if (recordSteps) result.Steps.Add(new SearchStep(SearchStepType.Expanded, current));
 
 			if (current == goal)
 			{
@@ -36,6 +38,7 @@ public class BfsAlgorithm : IPathfindingAlgorithm
 				visited.Add(neighbor);
 				cameFrom[neighbor] = current;
 				queue.Enqueue(neighbor);
+				if (recordSteps) result.Steps.Add(new SearchStep(SearchStepType.FrontierAdded, neighbor));
 			}
 		}
 

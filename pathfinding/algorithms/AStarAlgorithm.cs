@@ -5,14 +5,16 @@ public class AStarAlgorithm : IPathfindingAlgorithm
 {
 	public string AlgorithmName => "A*";
 
-	public PathfindingResult FindPath(GridSnapshot grid, Vector2I start, Vector2I goal)
+	public PathfindingResult FindPath(GridSnapshot grid, Vector2I start, Vector2I goal, bool recordSteps = false)
 	{
 		var result = new PathfindingResult();
 		var gCost = new Dictionary<Vector2I, float> { [start] = 0f };
 		var cameFrom = new Dictionary<Vector2I, Vector2I>();
 		var pq = new PriorityQueue<Vector2I, float>();
 		var visited = new HashSet<Vector2I>();
+
 		pq.Enqueue(start, Heuristic(start, goal));
+		if (recordSteps) result.Steps.Add(new SearchStep(SearchStepType.FrontierAdded, start));
 
 		while (pq.Count > 0)
 		{
@@ -20,8 +22,9 @@ public class AStarAlgorithm : IPathfindingAlgorithm
 			var current = pq.Dequeue();
 			if (visited.Contains(current)) continue;
 			visited.Add(current);
+
 			result.VisitedOrder.Add(current);
-			
+			if (recordSteps) result.Steps.Add(new SearchStep(SearchStepType.Expanded, current));
 
 			if (current == goal)
 			{
@@ -42,6 +45,7 @@ public class AStarAlgorithm : IPathfindingAlgorithm
 					gCost[neighbor] = tentativeG;
 					cameFrom[neighbor] = current;
 					pq.Enqueue(neighbor, tentativeG + Heuristic(neighbor, goal));
+					if (recordSteps) result.Steps.Add(new SearchStep(SearchStepType.FrontierAdded, neighbor));
 				}
 			}
 		}

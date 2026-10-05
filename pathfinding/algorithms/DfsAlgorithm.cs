@@ -5,13 +5,15 @@ public class DfsAlgorithm : IPathfindingAlgorithm
 {
 	public string AlgorithmName => "DFS";
 
-	public PathfindingResult FindPath(GridSnapshot grid, Vector2I start, Vector2I goal)
+	public PathfindingResult FindPath(GridSnapshot grid, Vector2I start, Vector2I goal, bool recordSteps = false)
 	{
 		var resultado = new PathfindingResult();
 		var visitados = new HashSet<Vector2I>();
 		var veioDe = new Dictionary<Vector2I, Vector2I>();
 		var pilha = new Stack<Vector2I>();
+
 		pilha.Push(start);
+		if (recordSteps) resultado.Steps.Add(new SearchStep(SearchStepType.FrontierAdded, start));
 
 		while (pilha.Count > 0)
 		{
@@ -19,7 +21,9 @@ public class DfsAlgorithm : IPathfindingAlgorithm
 			var atual = pilha.Pop();
 			if (visitados.Contains(atual)) continue;
 			visitados.Add(atual);
+
 			resultado.VisitedOrder.Add(atual);
+			if (recordSteps) resultado.Steps.Add(new SearchStep(SearchStepType.Expanded, atual));
 
 			if (atual == goal)
 			{
@@ -38,6 +42,7 @@ public class DfsAlgorithm : IPathfindingAlgorithm
 
 				veioDe[vizinho] = atual;
 				pilha.Push(vizinho);
+				if (recordSteps) resultado.Steps.Add(new SearchStep(SearchStepType.FrontierAdded, vizinho));
 			}
 		}
 

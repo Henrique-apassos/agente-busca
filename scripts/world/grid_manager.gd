@@ -149,6 +149,10 @@ func darken_cell(x: int, z: int):
 func highlight_cell(x: int, z: int):
 	set_cell_color(x, z, Color(1.0, 0.95, 0.3))
 
+func frontier_cell(x: int, z: int):
+	var base: Color = grid_logic[x][z].color
+	set_cell_color(x, z, base.lerp(Color(1.0, 0.2, 0.8), 0.55))
+
 func reset_all_cell_colors():
 	for x in range(grid_width):
 		for z in range(grid_depth):

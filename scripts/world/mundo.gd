@@ -1,5 +1,9 @@
 extends Node3D
 
+# Deve bater com o enum SearchStepType do PathfindingResult.cs
+const STEP_FRONTIER_ADDED := 0
+const STEP_EXPANDED := 1
+
 @onready var free_camera = $Camera3D
 @onready var top_camera = $TopCamera
 @onready var camera_label = $HUD/InfoPanel/CameraLabel
@@ -26,6 +30,7 @@ var path_found: bool = false
 var cancel_requested: bool = false
 var restart_requested: bool = false
 var foods_collected: int = 0
+var show_frontier: bool = true
 
 func _ready():
 	free_camera.make_current()
@@ -43,7 +48,7 @@ func _ready():
 	agente.connect("FoodCollected", _on_food_collected)
 
 	algorithm_label.text = "Algoritmo: %s" % agente.GetAlgorithmName()
-	status_label.text = "Pronto (F: buscar | G: seguir | B: trocar algoritmo | T: reiniciar teste | N: mover comida)"
+	status_label.text = "Pronto (F: buscar | G: seguir | B: trocar algoritmo | V: fronteira | T: reiniciar teste | N: mover comida)"
 	search_metrics_label.text = ""
 	movement_metrics_label.text = ""
 	food_count_label.text = "Comidas coletadas: 0"
@@ -68,10 +73,16 @@ func _input(event):
 				try_follow_path()
 			KEY_B:
 				cycle_algorithm()
+			KEY_V:
+				toggle_frontier()
 			KEY_T:
 				reset_to_initial_state()
 			KEY_N:
 				relocate_food()
+
+func toggle_frontier():
+	show_frontier = !show_frontier
+	status_label.text = "Fronteira: %s (vale a partir da próxima busca)" % ("visível" if show_frontier else "oculta")
 
 func start_search():
 	if is_searching:
@@ -138,9 +149,9 @@ func reset_to_initial_state():
 	search_metrics_label.text = ""
 	movement_metrics_label.text = ""
 
-func _on_search_completed(algorithm_name: String, visited: Array, path: Array, found: bool, search_time_ms: float, _path_weight: float):
+func _on_search_completed(algorithm_name: String, visited: Array, path: Array, found: bool, search_time_ms: float, _path_weight: float, step_types: Array, step_positions: Array):
 	algorithm_label.text = "Algoritmo: %s" % algorithm_name
-	await animate_visited(visited)
+	var max_frontier: int = await animate_steps(step_types, step_positions)
 
 	grid_manager.reset_all_cell_colors()
 	grid_manager.clear_path_border()
@@ -159,22 +170,50 @@ func _on_search_completed(algorithm_name: String, visited: Array, path: Array, f
 	else:
 		status_label.text = "Nenhum caminho encontrado."
 
-	search_metrics_label.text = "Tempo real do algoritmo: %.3f ms | Nós visitados: %d" % [search_time_ms, visited.size()]
+	search_metrics_label.text = "Tempo real do algoritmo: %.3f ms | Nós visitados: %d | Fronteira máx.: %d" % [search_time_ms, visited.size(), max_frontier]
 
 	path_found = found
 	is_searching = false
 
-func animate_visited(visited: Array) -> void:
+# Reproduz a lista de passos gravada pelo algoritmo, na ordem:
+#   FrontierAdded -> pinta a célula como fronteira (se ainda não foi expandida)
+#   Expanded      -> escurece a célula e tira da fronteira
+# A pausa de animação acontece só nas expansões, então a velocidade
+# continua a mesma de antes. Retorna o maior tamanho que a fronteira atingiu.
+func animate_steps(step_types: Array, step_positions: Array) -> int:
 	var start_ticks = Time.get_ticks_msec()
-	var count = 0
-	for cell in visited:
+	var frontier := {}  # células empurradas e ainda não expandidas (deduplicadas)
+	var expanded := {}
+	var max_frontier := 0
+	var total_expanded := 0
+	for t in step_types:
+		if t == STEP_EXPANDED:
+			total_expanded += 1
+	var expanded_count := 0
+
+	for i in range(step_types.size()):
 		if cancel_requested:
 			break
-		count += 1
-		grid_manager.darken_cell(cell.x, cell.y)
-		var elapsed_sec = (Time.get_ticks_msec() - start_ticks) / 1000.0
-		search_metrics_label.text = "Visualizando exploração: %.2fs (%d/%d nós)" % [elapsed_sec, count, visited.size()]
-		await get_tree().create_timer(visited_animation_delay).timeout
+
+		var cell = step_positions[i]
+
+		if step_types[i] == STEP_FRONTIER_ADDED:
+			if not expanded.has(cell):
+				frontier[cell] = true
+				if show_frontier:
+					grid_manager.frontier_cell(cell.x, cell.y)
+				max_frontier = max(max_frontier, frontier.size())
+		else:
+			expanded[cell] = true
+			frontier.erase(cell)
+			grid_manager.darken_cell(cell.x, cell.y)
+			expanded_count += 1
+
+			var elapsed_sec = (Time.get_ticks_msec() - start_ticks) / 1000.0
+			search_metrics_label.text = "Visualizando exploração: %.2fs (%d/%d nós) | Fronteira: %d" % [elapsed_sec, expanded_count, total_expanded, frontier.size()]
+			await get_tree().create_timer(visited_animation_delay).timeout
+
+	return max_frontier
 
 func _on_movement_progress(elapsed_ms: float, weight_so_far: float):
 	movement_metrics_label.text = "Movendo... tempo: %.2fs | peso percorrido: %.2f" % [elapsed_ms / 1000.0, weight_so_far]

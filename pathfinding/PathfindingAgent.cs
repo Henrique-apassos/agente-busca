@@ -14,7 +14,7 @@ public enum AlgorithmType
 
 public partial class PathfindingAgent : MeshInstance3D
 {
-	[Signal] public delegate void SearchCompletedEventHandler(string algorithmName, Godot.Collections.Array visitedOrder, Godot.Collections.Array path, bool found, double searchTimeMs, float pathWeight);
+	[Signal] public delegate void SearchCompletedEventHandler(string algorithmName, Godot.Collections.Array visitedOrder, Godot.Collections.Array path, bool found, double searchTimeMs, float pathWeight, Godot.Collections.Array stepTypes, Godot.Collections.Array stepPositions);
 	[Signal] public delegate void MovementProgressEventHandler(double elapsedMs, float weightSoFar);
 	[Signal] public delegate void MovementFinishedEventHandler(double elapsedMs, float weightSoFar);
 	[Signal] public delegate void FoodCollectedEventHandler();
@@ -26,7 +26,7 @@ public partial class PathfindingAgent : MeshInstance3D
 	[Export] public float GrassSpeed = 4.0f;
 	[Export] public float MudSpeed = 2.0f;
 	[Export] public float WaterSpeed = 1.0f;
-	[Export] public float TurnSpeed = 10.0f; // quão rápido ele gira pra encarar a nova direção
+	[Export] public float TurnSpeed = 10.0f;
 
 	private Node _gridManager;
 	private Node3D _endMarker;
@@ -57,8 +57,6 @@ public partial class PathfindingAgent : MeshInstance3D
 
 	private void OnAreaEntered(Area3D area)
 	{
-		// Confere se a área que entrou em contato pertence à comida (EndMarker),
-		// comparando o nó pai em vez do nome, pra não depender de string exata
 		if (area.GetParent() == _endMarker)
 		{
 			EmitSignal(SignalName.FoodCollected);
@@ -113,7 +111,7 @@ public partial class PathfindingAgent : MeshInstance3D
 
 	private void FaceDirection(Vector3 direction, float delta)
 	{
-		direction.Y = 0; // só gira no eixo horizontal (yaw), não inclina subindo/descendo
+		direction.Y = 0;
 		if (direction.LengthSquared() < 0.0001f)
 			return;
 
@@ -149,7 +147,7 @@ public partial class PathfindingAgent : MeshInstance3D
 		IPathfindingAlgorithm algorithm = CreateAlgorithm();
 
 		var stopwatch = Stopwatch.StartNew();
-		var result = algorithm.FindPath(_lastGrid, start, goal);
+		var result = algorithm.FindPath(_lastGrid, start, goal, recordSteps: true);
 		stopwatch.Stop();
 		double searchTimeMs = stopwatch.Elapsed.TotalMilliseconds;
 
@@ -165,7 +163,15 @@ public partial class PathfindingAgent : MeshInstance3D
 		foreach (var p in result.Path)
 			pathArr.Add(p);
 
-		EmitSignal(SignalName.SearchCompleted, GetAlgorithmName(), visitedArr, pathArr, result.Found, searchTimeMs, pathWeight);
+		var stepTypesArr = new Godot.Collections.Array();
+		var stepPositionsArr = new Godot.Collections.Array();
+		foreach (var step in result.Steps)
+		{
+			stepTypesArr.Add((int)step.Type);
+			stepPositionsArr.Add(step.Position);
+		}
+
+		EmitSignal(SignalName.SearchCompleted, GetAlgorithmName(), visitedArr, pathArr, result.Found, searchTimeMs, pathWeight, stepTypesArr, stepPositionsArr);
 	}
 
 	public void FollowPath()

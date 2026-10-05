@@ -5,19 +5,23 @@ public class GreedyBestFirstAlgorithm : IPathfindingAlgorithm
 {
 	public string AlgorithmName => "Greedy Best-First";
 
-	public PathfindingResult FindPath(GridSnapshot grid, Vector2I start, Vector2I goal)
+	public PathfindingResult FindPath(GridSnapshot grid, Vector2I start, Vector2I goal, bool recordSteps = false)
 	{
 		var result = new PathfindingResult();
 		var visited = new HashSet<Vector2I> { start };
 		var cameFrom = new Dictionary<Vector2I, Vector2I>();
 		var pq = new PriorityQueue<Vector2I, float>();
+
 		pq.Enqueue(start, Heuristic(start, goal));
+		if (recordSteps) result.Steps.Add(new SearchStep(SearchStepType.FrontierAdded, start));
 
 		while (pq.Count > 0)
 		{
 			if (pq.Count > result.MaxFrontier) result.MaxFrontier = pq.Count;
 			var current = pq.Dequeue();
+
 			result.VisitedOrder.Add(current);
+			if (recordSteps) result.Steps.Add(new SearchStep(SearchStepType.Expanded, current));
 
 			if (current == goal)
 			{
@@ -35,6 +39,7 @@ public class GreedyBestFirstAlgorithm : IPathfindingAlgorithm
 				visited.Add(neighbor);
 				cameFrom[neighbor] = current;
 				pq.Enqueue(neighbor, Heuristic(neighbor, goal));
+				if (recordSteps) result.Steps.Add(new SearchStep(SearchStepType.FrontierAdded, neighbor));
 			}
 		}
 
