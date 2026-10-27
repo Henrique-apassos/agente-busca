@@ -9,7 +9,8 @@ public enum AlgorithmType
 	AStar,
 	Dijkstra,
 	GreedyBestFirst,
-	DFS
+	DFS,
+	Genetic
 }
 
 public partial class PathfindingAgent : MeshInstance3D
@@ -224,6 +225,7 @@ public partial class PathfindingAgent : MeshInstance3D
 			AlgorithmType.Dijkstra => "Dijkstra",
 			AlgorithmType.GreedyBestFirst => "Greedy Best-First",
 			AlgorithmType.DFS => "DFS",
+			AlgorithmType.Genetic => "Algoritmo Genético",
 			_ => "Desconhecido"
 		};
 	}
@@ -237,6 +239,7 @@ public partial class PathfindingAgent : MeshInstance3D
 			AlgorithmType.Dijkstra => new DijkstraAlgorithm(),
 			AlgorithmType.GreedyBestFirst => new GreedyBestFirstAlgorithm(),
 			AlgorithmType.DFS => new DfsAlgorithm(),
+			AlgorithmType.Genetic => new GeneticAlgorithm(),
 			_ => new BfsAlgorithm()
 		};
 	}

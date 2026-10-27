@@ -3,8 +3,13 @@ using System.Collections.Generic;
 
 public enum SearchStepType
 {
-	FrontierAdded,
-	Expanded
+	FrontierAdded = 0,
+	Expanded = 1,
+	GenerationStart = 2,
+	IndividualStart = 3,
+	IndividualStep = 4,
+	GenerationBestPath = 5,
+	GenerationEnd = 6
 }
 
 public struct SearchStep

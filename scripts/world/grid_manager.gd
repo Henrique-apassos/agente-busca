@@ -24,6 +24,7 @@ var noise: FastNoiseLite
 var obstacle_noise: FastNoiseLite
 @onready var grid_visualizer = $GridVisualizer
 @onready var path_visualizer = $PathVisualizer
+@onready var search_overlay = $SearchOverlay
 var grid_logic = []
 
 func _ready():
@@ -36,6 +37,8 @@ func _ready():
 	obstacle_noise.seed = randi()
 
 	_setup_path_visualizer()
+	_setup_path_visualizer()
+	_setup_population_visualizer()
 	aplicar_nivel(nivel_atual)
 	generate_grid()
 
@@ -251,3 +254,53 @@ func show_path_border(path_cells: Array):
 
 func clear_path_border():
 	path_visualizer.multimesh.instance_count = 0
+	
+
+# --- Visualização da População (Algoritmo Genético) ---
+
+func heat_cell(x: int, z: int, visit_count: int, pop_size: int):
+	var base: Color = grid_logic[x][z].color
+	var ratio: float = clamp(float(visit_count) / max(1.0, float(pop_size) * 0.45), 0.0, 1.0)
+	# Poucos indivíduos (exploração/mutação) = Ciano; Muitos indivíduos (convergência) = Magenta/Laranja
+	var low_color := Color(0.1, 0.85, 1.0)
+	var high_color := Color(1.0, 0.2, 0.65)
+	var heat_color := low_color.lerp(high_color, ratio)
+	set_cell_color(x, z, base.lerp(heat_color, 0.65))
+
+func _setup_population_visualizer():
+	var sphere = SphereMesh.new()
+	sphere.radius = 0.18
+	sphere.height = 0.36
+
+	var material = StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.vertex_color_use_as_albedo = true
+	search_overlay.material_override = material
+
+	var mm = MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.mesh = sphere
+	mm.instance_count = 0
+	search_overlay.multimesh = mm
+
+func show_population_agents(positions: Array, statuses: Array):
+	var mm = search_overlay.multimesh
+	mm.instance_count = positions.size()
+	for i in range(positions.size()):
+		var cell_vec = positions[i]
+		var cell = grid_logic[cell_vec.x][cell_vec.y]
+		var pos = cell.world_pos + Vector3(0, 0.28, 0)
+		mm.set_instance_transform(i, Transform3D(Basis(), pos))
+
+		var st: int = statuses[i]
+		if st == 2:
+			mm.set_instance_color(i, Color(1.0, 0.95, 0.2)) # Elite (Dourado)
+		elif st == 1:
+			mm.set_instance_color(i, Color(0.2, 1.0, 0.5))  # Chegou à comida (Verde)
+		else:
+			mm.set_instance_color(i, Color(1.0, 0.35, 0.75)) # Explorando (Rosa)
+
+func clear_population_agents():
+	if search_overlay and search_overlay.multimesh:
+		search_overlay.multimesh.instance_count = 0

@@ -1,8 +1,14 @@
 extends Node3D
 
 # Deve bater com o enum SearchStepType do PathfindingResult.cs
+# Deve bater com o enum SearchStepType do PathfindingResult.cs
 const STEP_FRONTIER_ADDED := 0
 const STEP_EXPANDED := 1
+const STEP_GEN_START := 2
+const STEP_IND_START := 3
+const STEP_IND_STEP := 4
+const STEP_GEN_BEST_PATH := 5
+const STEP_GEN_END := 6
 
 @onready var free_camera = $Camera3D
 @onready var top_camera = $TopCamera
@@ -212,6 +218,9 @@ func _on_search_completed(algorithm_name: String, visited: Array, path: Array, f
 # A pausa de animação acontece só nas expansões, então a velocidade
 # continua a mesma de antes. Retorna o maior tamanho que a fronteira atingiu.
 func animate_steps(step_types: Array, step_positions: Array) -> int:
+	if step_types.has(STEP_GEN_START):
+		return await animate_genetic_steps(step_types, step_positions)
+
 	var start_ticks = Time.get_ticks_msec()
 	var frontier := {}  # células empurradas e ainda não expandidas (deduplicadas)
 	var expanded := {}
@@ -244,6 +253,114 @@ func animate_steps(step_types: Array, step_positions: Array) -> int:
 			search_metrics_label.text = "Visualizando exploração: %.2fs (%d/%d nós) | Fronteira: %d" % [elapsed_sec, expanded_count, total_expanded, frontier.size()]
 			await get_tree().create_timer(visited_animation_delay).timeout
 
+	return max_frontier
+
+func animate_genetic_steps(step_types: Array, step_positions: Array) -> int:
+	# 1. Reconstrói os dados de cada geração gravados pelo C#
+	var generations := []
+	var current_gen := {}
+	var current_ind_path := []
+	var current_ind_status := 0
+
+	for i in range(step_types.size()):
+		var t: int = step_types[i]
+		var pos: Vector2i = step_positions[i]
+
+		match t:
+			STEP_GEN_START:
+				current_gen = {
+					"gen": pos.x,
+					"reached": pos.y,
+					"individuals": [],
+					"statuses": [],
+					"best_path": [],
+					"best_cost": 0.0,
+					"pop_size": 0
+				}
+			STEP_IND_START:
+				if not current_ind_path.is_empty():
+					current_gen["individuals"].append(current_ind_path)
+					current_gen["statuses"].append(current_ind_status)
+				current_ind_path = []
+				current_ind_status = pos.y
+			STEP_IND_STEP:
+				current_ind_path.append(pos)
+			STEP_GEN_BEST_PATH:
+				if not current_ind_path.is_empty():
+					current_gen["individuals"].append(current_ind_path)
+					current_gen["statuses"].append(current_ind_status)
+					current_ind_path = []
+				current_gen["best_path"].append(pos)
+			STEP_GEN_END:
+				if not current_ind_path.is_empty():
+					current_gen["individuals"].append(current_ind_path)
+					current_gen["statuses"].append(current_ind_status)
+					current_ind_path = []
+				current_gen["best_cost"] = pos.x / 10.0
+				current_gen["pop_size"] = pos.y
+				generations.append(current_gen)
+
+	var total_gens := generations.size()
+	var max_frontier := 0
+
+	# 2. Anima geração por geração
+	for g in generations:
+		if cancel_requested:
+			break
+
+		grid_manager.reset_all_cell_colors()
+		var individuals: Array = g["individuals"]
+		var statuses: Array = g["statuses"]
+		var pop_size: int = max(1, g["pop_size"])
+		var visit_counts := {}
+
+		var max_steps := 0
+		for ind_path in individuals:
+			if ind_path.size() > max_steps:
+				max_steps = ind_path.size()
+
+		# Avança os passos dos indivíduos da população simultaneamente (~10 frames por geração)
+		var stride: int = max(1, int(ceil(float(max_steps) / 10.0)))
+
+		for step_idx in range(max_steps):
+			if cancel_requested:
+				break
+
+			var agent_positions := []
+			var agent_statuses := []
+
+			for ind_idx in range(individuals.size()):
+				var ind_path: Array = individuals[ind_idx]
+				if ind_path.is_empty():
+					continue
+				var clamped_idx: int = min(step_idx, ind_path.size() - 1)
+				var cell: Vector2i = ind_path[clamped_idx]
+
+				if step_idx < ind_path.size():
+					visit_counts[cell] = visit_counts.get(cell, 0) + 1
+					if show_frontier:
+						grid_manager.heat_cell(cell.x, cell.y, visit_counts[cell], pop_size)
+
+				agent_positions.append(cell)
+				agent_statuses.append(statuses[ind_idx])
+
+			if step_idx % stride == 0 or step_idx == max_steps - 1:
+				if show_frontier:
+					grid_manager.show_population_agents(agent_positions, agent_statuses)
+				search_metrics_label.text = "Geração %d/%d | População: %d (%d chegaram) | Melhor custo: %.1f" % [
+					g["gen"], total_gens, pop_size, g["reached"], g["best_cost"]
+				]
+				await get_tree().create_timer(0.015).timeout
+
+		max_frontier = max(max_frontier, visit_counts.size())
+
+		# Destaca o melhor caminho da geração com a moldura dourada
+		if not g["best_path"].is_empty():
+			grid_manager.show_path_border(g["best_path"])
+
+		await get_tree().create_timer(0.07).timeout
+
+	grid_manager.clear_population_agents()
 	return max_frontier
 
 func _on_movement_progress(elapsed_ms: float, weight_so_far: float):
